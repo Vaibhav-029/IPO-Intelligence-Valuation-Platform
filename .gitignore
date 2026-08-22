@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+node_modules/
+.next/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+data/uploads/
+data/chroma/
+*.db
+

@@ -1,0 +1,647 @@
+{
+  "_metadata": {
+    "description": "Real Indian IPO company data for the IPO Intelligence platform.",
+    "data_sources": [
+      "Chittorgarh.com (IPO details)",
+      "Screener.in (financial data)",
+      "Company RHP filings (risk factors)",
+      "Public financial reports (balance sheet)"
+    ],
+    "currency": "INR Crore",
+    "last_updated": "2026-08-19",
+    "disclaimer": "All financial data is sourced from public filings and financial aggregators. Values may vary slightly across sources due to restatements. Always validate against official SEBI filings before investment decisions.",
+    "total_companies": 20
+  },
+
+  "companies": [
+    {
+      "name": "Tata Technologies",
+      "slug": "tata-technologies",
+      "sector": "Technology",
+      "exchange": "NSE / BSE",
+      "description": "Tata Technologies is a global engineering and product development digital services company. A subsidiary of Tata Motors, it provides services to automotive and aerospace OEMs worldwide, specializing in product engineering, manufacturing engineering, and digital transformation solutions. The IPO was a pure Offer for Sale (OFS) with no fresh capital raised by the company.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 3042.51,
+        "price_low": 475,
+        "price_high": 500,
+        "issue_date": "2023-11-22",
+        "listing_date": "2023-11-30",
+        "fresh_issue_crore": 0,
+        "ofs_crore": 3042.51
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 2425.74, "ebitda": 648, "pat": 436.97, "total_debt": 261, "cash": 580, "equity": 2280 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 3578.37, "ebitda": 827, "pat": 624.03, "total_debt": 255, "cash": 720, "equity": 2989 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 3137.09, "ebitda": 932, "pat": 687.39, "total_debt": 257, "cash": 810, "equity": 3221 }
+      ],
+      "valuation": { "date": "2024-03-31", "market_cap": 36500, "pe": 53.1, "ps": 11.63, "ev_ebitda": 38.8, "ev_sales": 11.42 },
+      "risk_factors": [
+        { "category": "Revenue concentration", "severity": "High", "summary": "Significant revenue dependence on Tata Motors and its affiliates. Any adverse change in the relationship or Tata Motors' business could materially affect the company.", "source_page": 31 },
+        { "category": "Client concentration", "severity": "Medium", "summary": "Top 5 clients contribute a substantial portion of revenue. Loss of any major client could impact financial performance significantly.", "source_page": 33 },
+        { "category": "Industry cyclicality", "severity": "Medium", "summary": "Revenue tied to automotive and aerospace R&D spending cycles. Economic downturns can lead to significant reduction in discretionary engineering spend.", "source_page": 38 }
+      ],
+      "score_inputs": { "profitability": 8.0, "growth": 7.5, "valuation": 5.5, "balance_sheet": 8.2, "business_quality": 8.3, "risk": 6.5 }
+    },
+
+    {
+      "name": "Bajaj Housing Finance",
+      "slug": "bajaj-housing-finance",
+      "sector": "Financial Services",
+      "exchange": "NSE / BSE",
+      "description": "Bajaj Housing Finance is a wholly-owned subsidiary of Bajaj Finance Limited and one of India's largest non-deposit-taking housing finance companies by AUM. It offers home loans, loans against property, lease rental discounting, and developer financing. It holds the highest AAA/Stable credit rating from CRISIL and ICRA.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 6560,
+        "price_low": 66,
+        "price_high": 70,
+        "issue_date": "2024-09-09",
+        "listing_date": "2024-09-16",
+        "fresh_issue_crore": 3560,
+        "ofs_crore": 3000
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 3767, "ebitda": 1200, "pat": 710, "total_debt": 41492, "cash": 2800, "equity": 6741 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 5620, "ebitda": 1850, "pat": 1125, "total_debt": 55300, "cash": 3500, "equity": 7866 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 7617.71, "ebitda": 2900, "pat": 1731.22, "total_debt": 72500, "cash": 4200, "equity": 9597 }
+      ],
+      "valuation": { "date": "2024-09-16", "market_cap": 97300, "pe": 56.2, "ps": 12.77, "ev_ebitda": 57.0, "ev_sales": 21.7 },
+      "risk_factors": [
+        { "category": "Interest rate sensitivity", "severity": "High", "summary": "As a housing finance company, profitability is directly impacted by interest rate movements. Rising rates compress net interest margins and increase borrower defaults.", "source_page": 25 },
+        { "category": "Asset quality risk", "severity": "Medium", "summary": "Growth in the loan book, particularly in affordable housing and developer finance, carries credit risk. Any deterioration in asset quality can significantly impact provisioning and profitability.", "source_page": 29 },
+        { "category": "Regulatory risk", "severity": "Medium", "summary": "Subject to regulation by NHB and RBI. Changes in capital adequacy, provisioning norms, or lending guidelines could affect business operations and growth plans.", "source_page": 34 }
+      ],
+      "score_inputs": { "profitability": 8.5, "growth": 8.8, "valuation": 4.8, "balance_sheet": 7.0, "business_quality": 8.5, "risk": 6.0 }
+    },
+
+    {
+      "name": "Swiggy",
+      "slug": "swiggy",
+      "sector": "Consumer Technology",
+      "exchange": "NSE / BSE",
+      "description": "Swiggy is one of India's leading food delivery and quick commerce platforms. It operates Swiggy Food Delivery, Instamart (quick commerce), Swiggy Dineout (dining out), and Swiggy Genie (package delivery). The company is loss-making but has shown consistent revenue growth and narrowing losses over time. It competes primarily with Zomato in the Indian market.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 11327.43,
+        "price_low": 371,
+        "price_high": 390,
+        "issue_date": "2024-11-06",
+        "listing_date": "2024-11-13",
+        "fresh_issue_crore": 4499,
+        "ofs_crore": 6828.43
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 5704, "ebitda": -3200, "pat": -3625, "total_debt": 1050, "cash": 6200, "equity": 7800 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 8265, "ebitda": -3600, "pat": -4178, "total_debt": 880, "cash": 4100, "equity": 5200 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 11634, "ebitda": -1500, "pat": -2350, "total_debt": 750, "cash": 3800, "equity": 4900 }
+      ],
+      "valuation": { "date": "2024-11-13", "market_cap": 87000, "pe": null, "ps": 7.48, "ev_ebitda": null, "ev_sales": 7.21 },
+      "risk_factors": [
+        { "category": "Path to profitability", "severity": "High", "summary": "The company has incurred significant net losses in each year since inception and may not achieve or sustain profitability. Accumulated losses erode shareholder equity.", "source_page": 22 },
+        { "category": "Intense competition", "severity": "High", "summary": "Operates in a highly competitive market with well-funded competitors like Zomato, Zepto, and BigBasket. Aggressive pricing by competitors may require continued high spending on incentives and marketing.", "source_page": 27 },
+        { "category": "Regulatory and legal", "severity": "Medium", "summary": "Subject to evolving regulations around gig workers, food safety, and e-commerce. Platform liability and labor classification laws could increase operating costs.", "source_page": 35 }
+      ],
+      "score_inputs": { "profitability": 3.0, "growth": 9.0, "valuation": 4.5, "balance_sheet": 5.5, "business_quality": 7.5, "risk": 4.5 }
+    },
+
+    {
+      "name": "Waaree Energies",
+      "slug": "waaree-energies",
+      "sector": "Renewable Energy",
+      "exchange": "NSE / BSE",
+      "description": "Waaree Energies is India's largest solar PV module manufacturer by installed capacity. The company designs, manufactures, and sells solar photovoltaic modules, and also provides EPC services for solar projects. It has manufacturing facilities in Gujarat with a combined capacity exceeding 12 GW.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 4321.44,
+        "price_low": 1427,
+        "price_high": 1503,
+        "issue_date": "2024-10-21",
+        "listing_date": "2024-10-28",
+        "fresh_issue_crore": 3600,
+        "ofs_crore": 721.44
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 2945.85, "ebitda": 180, "pat": 79.65, "total_debt": 420, "cash": 150, "equity": 890 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 6860.36, "ebitda": 750, "pat": 500.28, "total_debt": 550, "cash": 320, "equity": 1390 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 10957.68, "ebitda": 1531, "pat": 1148.35, "total_debt": 680, "cash": 600, "equity": 2538 }
+      ],
+      "valuation": { "date": "2024-10-28", "market_cap": 68000, "pe": 59.2, "ps": 6.21, "ev_ebitda": 44.5, "ev_sales": 6.22 },
+      "risk_factors": [
+        { "category": "Policy and subsidy dependence", "severity": "High", "summary": "Solar industry growth is heavily dependent on government policies like PLI scheme, BCD tariffs on imports, and renewable energy mandates. Policy changes can rapidly alter the competitive landscape.", "source_page": 28 },
+        { "category": "Raw material price volatility", "severity": "High", "summary": "Solar cell and wafer prices are subject to global supply-demand dynamics, primarily driven by Chinese manufacturers. Fluctuations in polysilicon and solar cell prices directly impact margins.", "source_page": 32 },
+        { "category": "Technology obsolescence", "severity": "Medium", "summary": "Rapid advances in solar cell technology (e.g., TOPCon, HJT, perovskite) require continuous capex to remain competitive. Existing manufacturing lines may become obsolete.", "source_page": 41 }
+      ],
+      "score_inputs": { "profitability": 7.0, "growth": 9.5, "valuation": 5.0, "balance_sheet": 7.5, "business_quality": 7.8, "risk": 5.5 }
+    },
+
+    {
+      "name": "Ola Electric",
+      "slug": "ola-electric",
+      "sector": "Electric Vehicles",
+      "exchange": "NSE / BSE",
+      "description": "Ola Electric Mobility is India's largest electric two-wheeler manufacturer by market share. The company designs, develops, manufactures, and sells electric vehicles including the Ola S1 series of electric scooters. It also has plans for EV cell manufacturing (Gigafactory). The company has been loss-making but is on a path toward EBITDA positivity.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 6145.56,
+        "price_low": 72,
+        "price_high": 76,
+        "issue_date": "2024-08-02",
+        "listing_date": "2024-08-09",
+        "fresh_issue_crore": 5500,
+        "ofs_crore": 645.56
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 456.26, "ebitda": -680, "pat": -784.15, "total_debt": 1200, "cash": 1500, "equity": 3200 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 2782.70, "ebitda": -1250, "pat": -1472.08, "total_debt": 1800, "cash": 900, "equity": 2100 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 5243.27, "ebitda": -1350, "pat": -1584.40, "total_debt": 2200, "cash": 800, "equity": 1500 }
+      ],
+      "valuation": { "date": "2024-08-09", "market_cap": 33400, "pe": null, "ps": 6.37, "ev_ebitda": null, "ev_sales": 6.65 },
+      "risk_factors": [
+        { "category": "Sustained losses", "severity": "High", "summary": "The company has reported net losses in every financial year since inception. Continued losses may require additional fundraising, diluting existing shareholders.", "source_page": 24 },
+        { "category": "Product quality and safety", "severity": "High", "summary": "Multiple reported incidents of vehicle fires and quality complaints have led to regulatory scrutiny and brand reputation risks. Product recalls impact financials and customer trust.", "source_page": 30 },
+        { "category": "Intense competition", "severity": "Medium", "summary": "Faces competition from established players like TVS (iQube), Bajaj (Chetak), Ather Energy, and new entrants. Price wars could further compress margins.", "source_page": 36 }
+      ],
+      "score_inputs": { "profitability": 2.0, "growth": 9.0, "valuation": 4.0, "balance_sheet": 3.5, "business_quality": 6.0, "risk": 3.5 }
+    },
+
+    {
+      "name": "IREDA",
+      "slug": "ireda",
+      "sector": "Financial Services",
+      "exchange": "NSE / BSE",
+      "description": "Indian Renewable Energy Development Agency (IREDA) is a government-owned NBFC under the Ministry of New and Renewable Energy. It provides financial assistance for renewable energy and energy efficiency projects across India. IREDA plays a key role in India's green energy transition by financing solar, wind, biomass, and hydroelectric projects.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 2150.21,
+        "price_low": 30,
+        "price_high": 32,
+        "issue_date": "2023-11-21",
+        "listing_date": "2023-11-29",
+        "fresh_issue_crore": 2150.21,
+        "ofs_crore": 0
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 2875, "ebitda": 1100, "pat": 634, "total_debt": 28000, "cash": 1200, "equity": 5400 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 3483.04, "ebitda": 1450, "pat": 864.63, "total_debt": 35000, "cash": 1500, "equity": 6264 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 4965.29, "ebitda": 2100, "pat": 1252.24, "total_debt": 44000, "cash": 2000, "equity": 7516 }
+      ],
+      "valuation": { "date": "2024-03-31", "market_cap": 52000, "pe": 41.5, "ps": 10.47, "ev_ebitda": 44.7, "ev_sales": 18.9 },
+      "risk_factors": [
+        { "category": "Concentration in renewable sector", "severity": "Medium", "summary": "Entire loan book is concentrated in the renewable energy sector. Adverse policy changes or technology disruption in renewables could impair asset quality across the portfolio.", "source_page": 26 },
+        { "category": "Government ownership", "severity": "Medium", "summary": "As a government enterprise, IREDA's strategic decisions and pricing may be influenced by policy directives that may not always align with shareholder value maximization.", "source_page": 30 },
+        { "category": "Asset quality in project finance", "severity": "Medium", "summary": "Renewable project loans carry execution and counterparty risks. Delays in commissioning or PPA disputes can lead to NPAs.", "source_page": 35 }
+      ],
+      "score_inputs": { "profitability": 7.5, "growth": 8.5, "valuation": 5.5, "balance_sheet": 6.5, "business_quality": 7.5, "risk": 6.0 }
+    },
+
+    {
+      "name": "Hyundai Motor India",
+      "slug": "hyundai-motor-india",
+      "sector": "Automobile",
+      "exchange": "NSE / BSE",
+      "description": "Hyundai Motor India is the second-largest car manufacturer in India by domestic sales. A subsidiary of Hyundai Motor Company (South Korea), it manufactures and sells passenger vehicles including popular models like Creta, Venue, i20, and Tucson. The IPO was India's largest ever at the time of listing, being entirely an Offer for Sale by the Korean parent.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 27870.16,
+        "price_low": 1865,
+        "price_high": 1960,
+        "issue_date": "2024-10-15",
+        "listing_date": "2024-10-22",
+        "fresh_issue_crore": 0,
+        "ofs_crore": 27870.16
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 47624, "ebitda": 4500, "pat": 2862, "total_debt": 2100, "cash": 5800, "equity": 18500 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 60880, "ebitda": 7200, "pat": 4654, "total_debt": 1900, "cash": 7200, "equity": 23100 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 70049, "ebitda": 9200, "pat": 5954, "total_debt": 1800, "cash": 8900, "equity": 29000 }
+      ],
+      "valuation": { "date": "2024-10-22", "market_cap": 159000, "pe": 26.7, "ps": 2.27, "ev_ebitda": 16.5, "ev_sales": 2.16 },
+      "risk_factors": [
+        { "category": "Parent company dependence", "severity": "High", "summary": "As a subsidiary of Hyundai Motor Company Korea, key strategic decisions including product development, pricing, and technology licensing are controlled by the parent. Dividend outflows to Korea may limit reinvestment.", "source_page": 24 },
+        { "category": "Intense auto market competition", "severity": "High", "summary": "Indian passenger vehicle market is intensely competitive with players like Maruti Suzuki, Tata Motors, Mahindra, and new EV entrants. Market share pressure requires continuous investment in new models.", "source_page": 28 },
+        { "category": "EV transition risk", "severity": "Medium", "summary": "The shift toward electric vehicles requires significant retooling and investment. Hyundai's EV lineup in India lags behind competitors like Tata Motors.", "source_page": 32 }
+      ],
+      "score_inputs": { "profitability": 8.5, "growth": 7.5, "valuation": 7.0, "balance_sheet": 9.0, "business_quality": 8.0, "risk": 6.5 }
+    },
+
+    {
+      "name": "FirstCry",
+      "slug": "firstcry",
+      "sector": "E-Commerce",
+      "exchange": "NSE / BSE",
+      "description": "Brainbees Solutions (FirstCry) is India's largest multi-channel retailer for mothers, babies, and kids. It operates the FirstCry online platform and offline stores selling baby care, toys, diapers, clothing, and kids' fashion. The company also operates BabyHug and Globalbees brands. Despite being loss-making, it has shown a clear trajectory toward profitability.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 4193.73,
+        "price_low": 440,
+        "price_high": 465,
+        "issue_date": "2024-08-06",
+        "listing_date": "2024-08-13",
+        "fresh_issue_crore": 1666,
+        "ofs_crore": 2527.73
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 1743.62, "ebitda": -380, "pat": -486.06, "total_debt": 450, "cash": 1200, "equity": 3100 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 2640.62, "ebitda": -100, "pat": -156.39, "total_debt": 380, "cash": 900, "equity": 2950 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 2266.46, "ebitda": -20, "pat": -62.19, "total_debt": 320, "cash": 800, "equity": 2890 }
+      ],
+      "valuation": { "date": "2024-08-13", "market_cap": 24000, "pe": null, "ps": 10.6, "ev_ebitda": null, "ev_sales": 10.4 },
+      "risk_factors": [
+        { "category": "Path to profitability", "severity": "High", "summary": "The company has incurred net losses since inception. Continued losses may strain cash reserves and require further capital raises that dilute shareholders.", "source_page": 24 },
+        { "category": "Competitive pressure", "severity": "Medium", "summary": "Faces competition from Amazon, Flipkart, Myntra, and specialized D2C baby care brands. Customer acquisition costs remain high in the e-commerce space.", "source_page": 31 },
+        { "category": "Inventory and working capital", "severity": "Medium", "summary": "Maintaining inventory across thousands of SKUs across online and offline channels creates working capital pressure and obsolescence risk.", "source_page": 38 }
+      ],
+      "score_inputs": { "profitability": 3.5, "growth": 7.0, "valuation": 4.0, "balance_sheet": 5.5, "business_quality": 6.5, "risk": 5.0 }
+    },
+
+    {
+      "name": "Premier Energies",
+      "slug": "premier-energies",
+      "sector": "Renewable Energy",
+      "exchange": "NSE / BSE",
+      "description": "Premier Energies is India's second-largest integrated solar cell and module manufacturer. The company manufactures mono PERC and TOPCon solar cells and modules at its facilities in Hyderabad. It has rapidly scaled manufacturing capacity to meet India's growing solar demand driven by government policies and global energy transition.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 2830.40,
+        "price_low": 427,
+        "price_high": 450,
+        "issue_date": "2024-08-27",
+        "listing_date": "2024-09-03",
+        "fresh_issue_crore": 1291.40,
+        "ofs_crore": 1539.00
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 767.03, "ebitda": 15, "pat": -14.41, "total_debt": 380, "cash": 45, "equity": 280 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 1463.21, "ebitda": 30, "pat": -13.34, "total_debt": 420, "cash": 60, "equity": 265 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 3171.31, "ebitda": 410, "pat": 231.36, "total_debt": 550, "cash": 120, "equity": 496 }
+      ],
+      "valuation": { "date": "2024-09-03", "market_cap": 42000, "pe": 181.5, "ps": 13.24, "ev_ebitda": 103.6, "ev_sales": 13.39 },
+      "risk_factors": [
+        { "category": "Execution and capacity ramp-up", "severity": "High", "summary": "Rapid expansion of manufacturing capacity carries execution risk. Delays or cost overruns in new production lines could affect financial projections.", "source_page": 27 },
+        { "category": "Customer and geographic concentration", "severity": "Medium", "summary": "Significant portion of revenue comes from a limited number of domestic solar project developers. Loss of key customers or domestic policy shifts could impact orders.", "source_page": 33 },
+        { "category": "Chinese import competition", "severity": "High", "summary": "Chinese solar manufacturers operate at significantly lower costs. Any reduction in import tariffs (BCD) could flood the market with cheaper imports and compress margins.", "source_page": 40 }
+      ],
+      "score_inputs": { "profitability": 5.0, "growth": 9.5, "valuation": 3.0, "balance_sheet": 4.5, "business_quality": 7.0, "risk": 4.5 }
+    },
+
+    {
+      "name": "Sagility India",
+      "slug": "sagility-india",
+      "sector": "Healthcare IT",
+      "exchange": "NSE / BSE",
+      "description": "Sagility India is a technology-led healthcare services company providing solutions to US health insurers, providers, and pharmacy benefit managers. Services include claims management, clinical review, revenue cycle management, and analytics. It is a pure-play healthcare outsourcing company catering primarily to the US healthcare market.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 2106.60,
+        "price_low": 28,
+        "price_high": 30,
+        "issue_date": "2024-11-05",
+        "listing_date": "2024-11-12",
+        "fresh_issue_crore": 0,
+        "ofs_crore": 2106.60
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 944.39, "ebitda": 100, "pat": -4.67, "total_debt": 800, "cash": 120, "equity": 1200 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 4236.06, "ebitda": 550, "pat": 143.57, "total_debt": 750, "cash": 180, "equity": 1344 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 4781.50, "ebitda": 720, "pat": 228.27, "total_debt": 680, "cash": 250, "equity": 1572 }
+      ],
+      "valuation": { "date": "2024-11-12", "market_cap": 14000, "pe": 61.3, "ps": 2.93, "ev_ebitda": 20.0, "ev_sales": 3.02 },
+      "risk_factors": [
+        { "category": "US healthcare market dependence", "severity": "High", "summary": "Almost all revenue is derived from the US healthcare industry. Regulatory changes to US healthcare (ACA, Medicare) could reduce client spending on outsourced services.", "source_page": 23 },
+        { "category": "Client concentration", "severity": "High", "summary": "A small number of large US health insurers contribute the majority of revenue. Loss of a single major client would have a material adverse impact.", "source_page": 28 },
+        { "category": "Currency risk", "severity": "Medium", "summary": "Revenue is primarily in USD while costs are in INR. Significant rupee appreciation against the dollar would compress margins.", "source_page": 34 }
+      ],
+      "score_inputs": { "profitability": 5.5, "growth": 8.0, "valuation": 5.5, "balance_sheet": 6.0, "business_quality": 7.0, "risk": 5.0 }
+    },
+
+    {
+      "name": "Afcons Infrastructure",
+      "slug": "afcons-infrastructure",
+      "sector": "Infrastructure",
+      "exchange": "NSE / BSE",
+      "description": "Afcons Infrastructure is one of India's largest infrastructure engineering and construction companies, and a Shapoorji Pallonji Group company. It has executed complex projects across marine works, highways, railways, metros, tunnels, and oil & gas infrastructure in India and internationally.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 5430,
+        "price_low": 440,
+        "price_high": 463,
+        "issue_date": "2024-10-25",
+        "listing_date": "2024-11-04",
+        "fresh_issue_crore": 1250,
+        "ofs_crore": 4180
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 10793, "ebitda": 920, "pat": 259, "total_debt": 3200, "cash": 800, "equity": 3500 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 12684, "ebitda": 1100, "pat": 410.80, "total_debt": 3500, "cash": 900, "equity": 3910 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 13285.34, "ebitda": 1250, "pat": 442.12, "total_debt": 3800, "cash": 1100, "equity": 4352 }
+      ],
+      "valuation": { "date": "2024-11-04", "market_cap": 15000, "pe": 33.9, "ps": 1.13, "ev_ebitda": 14.2, "ev_sales": 1.33 },
+      "risk_factors": [
+        { "category": "Project execution risk", "severity": "High", "summary": "Large infrastructure projects carry significant execution risk including cost overruns, delays, disputes with clients, and dependency on government approvals and land acquisition.", "source_page": 25 },
+        { "category": "Working capital intensity", "severity": "High", "summary": "Infrastructure projects require substantial working capital. Delayed payments from government clients can strain cash flows and increase borrowing costs.", "source_page": 30 },
+        { "category": "Geopolitical risk (international projects)", "severity": "Medium", "summary": "International projects in Middle East and Africa expose the company to geopolitical instability, currency risks, and regulatory uncertainties in foreign jurisdictions.", "source_page": 36 }
+      ],
+      "score_inputs": { "profitability": 5.5, "growth": 6.0, "valuation": 7.5, "balance_sheet": 5.5, "business_quality": 7.0, "risk": 5.5 }
+    },
+
+    {
+      "name": "Vishal Mega Mart",
+      "slug": "vishal-mega-mart",
+      "sector": "Retail",
+      "exchange": "NSE / BSE",
+      "description": "Vishal Mega Mart is one of India's largest hypermarket chains focused on value retailing. It operates across 600+ stores in tier-2 and tier-3 cities, selling apparel, FMCG, general merchandise, and grocery products. The company primarily serves price-conscious consumers in smaller Indian cities.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 8000,
+        "price_low": 74,
+        "price_high": 78,
+        "issue_date": "2024-12-11",
+        "listing_date": "2024-12-18",
+        "fresh_issue_crore": 0,
+        "ofs_crore": 8000
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 4199, "ebitda": 520, "pat": 191, "total_debt": 1500, "cash": 300, "equity": 2200 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 5619, "ebitda": 680, "pat": 247, "total_debt": 1400, "cash": 350, "equity": 2447 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 6239, "ebitda": 800, "pat": 318, "total_debt": 1300, "cash": 420, "equity": 2765 }
+      ],
+      "valuation": { "date": "2024-12-18", "market_cap": 35500, "pe": 111.6, "ps": 5.69, "ev_ebitda": 45.5, "ev_sales": 5.82 },
+      "risk_factors": [
+        { "category": "Thin retail margins", "severity": "High", "summary": "Value retailing operates on thin margins. Any increase in input costs, rent, or employee costs without corresponding price increases would erode profitability.", "source_page": 22 },
+        { "category": "Competition from e-commerce", "severity": "High", "summary": "Online retailers and quick commerce players are increasingly penetrating tier-2 and tier-3 cities, threatening the company's core customer base.", "source_page": 28 },
+        { "category": "Store expansion execution", "severity": "Medium", "summary": "Rapid store expansion requires significant capital and carries risk of cannibalization of existing stores or poor location selection.", "source_page": 34 }
+      ],
+      "score_inputs": { "profitability": 5.0, "growth": 7.0, "valuation": 3.5, "balance_sheet": 6.5, "business_quality": 6.5, "risk": 5.5 }
+    },
+
+    {
+      "name": "Unicommerce",
+      "slug": "unicommerce",
+      "sector": "SaaS",
+      "exchange": "NSE / BSE",
+      "description": "Unicommerce eSolutions is India's largest e-commerce enablement SaaS platform by revenue. It provides warehouse management, order management, and omnichannel retail solutions to brands and marketplaces. The company is profitable and serves over 3,500 customers including Lenskart, Mamaearth, and Sugar Cosmetics.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 276.57,
+        "price_low": 102,
+        "price_high": 108,
+        "issue_date": "2024-08-06",
+        "listing_date": "2024-08-13",
+        "fresh_issue_crore": 0,
+        "ofs_crore": 276.57
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 61.36, "ebitda": 8, "pat": 6.01, "total_debt": 5, "cash": 28, "equity": 65 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 92.97, "ebitda": 10, "pat": 6.48, "total_debt": 4, "cash": 35, "equity": 72 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 109.43, "ebitda": 18, "pat": 13.08, "total_debt": 3, "cash": 42, "equity": 85 }
+      ],
+      "valuation": { "date": "2024-08-13", "market_cap": 1800, "pe": 137.6, "ps": 16.45, "ev_ebitda": 97.8, "ev_sales": 16.08 },
+      "risk_factors": [
+        { "category": "Small scale and niche market", "severity": "Medium", "summary": "The company operates in a niche SaaS segment with relatively small absolute revenue. Scaling beyond e-commerce enablement may be challenging.", "source_page": 24 },
+        { "category": "Customer concentration", "severity": "Medium", "summary": "Dependent on the growth of Indian e-commerce and D2C brands. A slowdown in e-commerce growth would directly impact demand for the platform.", "source_page": 29 },
+        { "category": "Competition from global SaaS", "severity": "Medium", "summary": "Competes with global platforms like Shopify, SAP, and Oracle for larger enterprise clients. These competitors have significantly more resources and brand recognition.", "source_page": 33 }
+      ],
+      "score_inputs": { "profitability": 6.5, "growth": 7.5, "valuation": 3.0, "balance_sheet": 8.5, "business_quality": 7.5, "risk": 6.0 }
+    },
+
+    {
+      "name": "Go Digit Insurance",
+      "slug": "go-digit-insurance",
+      "sector": "Insurance",
+      "exchange": "NSE / BSE",
+      "description": "Go Digit General Insurance is a technology-driven general insurance company offering motor, health, travel, and property insurance through a digital-first model. Backed by Fairfax Holdings, it focuses on simplified products, quick claims processing, and digital distribution. It has become one of India's fastest-growing general insurers.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 2614.65,
+        "price_low": 258,
+        "price_high": 272,
+        "issue_date": "2024-05-15",
+        "listing_date": "2024-05-23",
+        "fresh_issue_crore": 1125,
+        "ofs_crore": 1489.65
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 4200, "ebitda": -200, "pat": -295.86, "total_debt": 50, "cash": 2800, "equity": 3500 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 7243, "ebitda": 150, "pat": 35.55, "total_debt": 40, "cash": 3200, "equity": 3536 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 9016, "ebitda": 400, "pat": 181.68, "total_debt": 30, "cash": 3800, "equity": 3718 }
+      ],
+      "valuation": { "date": "2024-05-23", "market_cap": 30000, "pe": 165.1, "ps": 3.33, "ev_ebitda": 65.5, "ev_sales": 2.91 },
+      "risk_factors": [
+        { "category": "Claims volatility", "severity": "High", "summary": "General insurance profitability is highly dependent on claims ratios. Natural catastrophes, pandemics, or adverse weather events can cause sudden spikes in claims.", "source_page": 25 },
+        { "category": "Regulatory and compliance risk", "severity": "Medium", "summary": "Insurance industry is heavily regulated by IRDAI. Changes in solvency requirements, pricing guidelines, or product approval processes could impact operations.", "source_page": 32 },
+        { "category": "Intense price competition", "severity": "Medium", "summary": "Online insurance distribution has intensified price competition. Aggregator platforms like Policybazaar enable easy comparison, putting pressure on premiums.", "source_page": 38 }
+      ],
+      "score_inputs": { "profitability": 4.5, "growth": 8.5, "valuation": 4.5, "balance_sheet": 8.0, "business_quality": 7.5, "risk": 5.5 }
+    },
+
+    {
+      "name": "Awfis Space Solutions",
+      "slug": "awfis-space-solutions",
+      "sector": "Real Estate Services",
+      "exchange": "NSE / BSE",
+      "description": "Awfis Space Solutions is India's largest flexible workspace provider by number of centers. It operates coworking spaces, managed offices, and enterprise solutions across major Indian cities. The company serves corporates, startups, and freelancers with plug-and-play office solutions.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 598.93,
+        "price_low": 364,
+        "price_high": 383,
+        "issue_date": "2024-05-22",
+        "listing_date": "2024-05-30",
+        "fresh_issue_crore": 128,
+        "ofs_crore": 470.93
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 278.72, "ebitda": -30, "pat": -57.05, "total_debt": 180, "cash": 45, "equity": 200 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 565.78, "ebitda": 10, "pat": -46.34, "total_debt": 220, "cash": 55, "equity": 154 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 872.84, "ebitda": 40, "pat": -18.05, "total_debt": 250, "cash": 70, "equity": 136 }
+      ],
+      "valuation": { "date": "2024-05-30", "market_cap": 3500, "pe": null, "ps": 4.0, "ev_ebitda": 92.0, "ev_sales": 4.21 },
+      "risk_factors": [
+        { "category": "Sustained losses", "severity": "High", "summary": "The company has reported net losses across all reported financial years. Profitability depends on achieving higher occupancy rates and operating leverage.", "source_page": 22 },
+        { "category": "Real estate market risk", "severity": "Medium", "summary": "Coworking demand is sensitive to economic cycles. Remote work trends and office market softness could reduce demand for flexible workspaces.", "source_page": 28 },
+        { "category": "Long-term lease obligations", "severity": "Medium", "summary": "The company enters into long-term lease agreements for its centers. In a downturn, fixed lease costs create significant financial risk if occupancy declines.", "source_page": 33 }
+      ],
+      "score_inputs": { "profitability": 3.0, "growth": 8.5, "valuation": 4.0, "balance_sheet": 3.5, "business_quality": 6.5, "risk": 4.5 }
+    },
+
+    {
+      "name": "TBO Tek",
+      "slug": "tbo-tek",
+      "sector": "Travel Technology",
+      "exchange": "NSE / BSE",
+      "description": "TBO Tek is a global B2B travel distribution platform connecting travel buyers (agents, OTAs) with travel suppliers (hotels, airlines). It operates in 100+ countries and provides booking technology for hotels, flights, and ancillary travel services. The company is profitable with strong recurring revenue.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 1550.81,
+        "price_low": 875,
+        "price_high": 920,
+        "issue_date": "2024-05-08",
+        "listing_date": "2024-05-15",
+        "fresh_issue_crore": 400,
+        "ofs_crore": 1150.81
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 511.93, "ebitda": 70, "pat": 33.72, "total_debt": 60, "cash": 120, "equity": 350 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 1085.77, "ebitda": 210, "pat": 148.49, "total_debt": 50, "cash": 180, "equity": 498 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 1393.00, "ebitda": 290, "pat": 201.00, "total_debt": 45, "cash": 240, "equity": 699 }
+      ],
+      "valuation": { "date": "2024-05-15", "market_cap": 15000, "pe": 74.6, "ps": 10.77, "ev_ebitda": 51.0, "ev_sales": 10.63 },
+      "risk_factors": [
+        { "category": "Travel industry cyclicality", "severity": "Medium", "summary": "Travel demand is highly sensitive to economic conditions, pandemics, and geopolitical events. COVID-19 demonstrated the industry's vulnerability to sudden demand shocks.", "source_page": 26 },
+        { "category": "Platform disintermediation", "severity": "Medium", "summary": "Large hotel chains and airlines may choose to bypass aggregator platforms and build direct booking channels, reducing the need for B2B distribution.", "source_page": 31 },
+        { "category": "International regulatory complexity", "severity": "Medium", "summary": "Operating across 100+ countries exposes the company to diverse regulatory environments, tax regimes, and data protection requirements.", "source_page": 37 }
+      ],
+      "score_inputs": { "profitability": 7.5, "growth": 8.5, "valuation": 4.5, "balance_sheet": 8.0, "business_quality": 8.0, "risk": 6.5 }
+    },
+
+    {
+      "name": "MobiKwik",
+      "slug": "mobikwik",
+      "sector": "Fintech",
+      "exchange": "NSE / BSE",
+      "description": "One MobiKwik Systems is a digital payments and financial services company. It operates the MobiKwik wallet and payment gateway, and offers consumer lending (buy-now-pay-later), merchant payments, and investment products. The company turned profitable in FY24 after years of losses and made a strong stock market debut.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 572,
+        "price_low": 265,
+        "price_high": 279,
+        "issue_date": "2024-12-11",
+        "listing_date": "2024-12-18",
+        "fresh_issue_crore": 572,
+        "ofs_crore": 0
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 543.22, "ebitda": -1100, "pat": -1281.62, "total_debt": 200, "cash": 400, "equity": 1500 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 546.85, "ebitda": -50, "pat": -82.59, "total_debt": 180, "cash": 350, "equity": 1420 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 883.97, "ebitda": 30, "pat": 8.94, "total_debt": 150, "cash": 300, "equity": 1429 }
+      ],
+      "valuation": { "date": "2024-12-18", "market_cap": 5500, "pe": 615.2, "ps": 6.22, "ev_ebitda": 178.3, "ev_sales": 6.07 },
+      "risk_factors": [
+        { "category": "Regulatory uncertainty in fintech", "severity": "High", "summary": "Digital lending and payments are subject to evolving RBI regulations. Changes in KYC norms, lending guidelines, or UPI interchange policies could disrupt the business model.", "source_page": 24 },
+        { "category": "Fragile profitability", "severity": "High", "summary": "The company only recently achieved profitability. Aggressive competition from Paytm, PhonePe, Google Pay, and banks could force increased spending and return to losses.", "source_page": 29 },
+        { "category": "Data privacy and cyber risk", "severity": "Medium", "summary": "Handling sensitive financial data creates liability risk. Data breaches or cyber incidents could result in regulatory penalties and loss of customer trust.", "source_page": 35 }
+      ],
+      "score_inputs": { "profitability": 3.0, "growth": 7.5, "valuation": 2.5, "balance_sheet": 5.0, "business_quality": 6.0, "risk": 4.0 }
+    },
+
+    {
+      "name": "Exicom Tele-Systems",
+      "slug": "exicom-tele-systems",
+      "sector": "EV Charging",
+      "exchange": "NSE / BSE",
+      "description": "Exicom Tele-Systems is India's leading EV charging solutions provider and also manufactures power systems for telecom infrastructure. The company designs, manufactures, and deploys AC and DC EV chargers across India and has partnerships with major auto OEMs. It straddles two growth themes: EV adoption and 5G telecom rollout.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 429,
+        "price_low": 135,
+        "price_high": 142,
+        "issue_date": "2024-02-27",
+        "listing_date": "2024-03-05",
+        "fresh_issue_crore": 329,
+        "ofs_crore": 100
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 373.69, "ebitda": 25, "pat": 3.45, "total_debt": 80, "cash": 30, "equity": 150 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 534.05, "ebitda": 35, "pat": 5.14, "total_debt": 90, "cash": 35, "equity": 155 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 885.38, "ebitda": 60, "pat": 27.46, "total_debt": 100, "cash": 50, "equity": 183 }
+      ],
+      "valuation": { "date": "2024-03-05", "market_cap": 4200, "pe": 153.0, "ps": 4.74, "ev_ebitda": 71.0, "ev_sales": 4.82 },
+      "risk_factors": [
+        { "category": "EV adoption pace", "severity": "High", "summary": "Revenue growth is directly tied to EV adoption in India. Slower-than-expected EV penetration would reduce demand for charging infrastructure.", "source_page": 24 },
+        { "category": "Technology and standards risk", "severity": "Medium", "summary": "EV charging standards are still evolving. Investment in current-generation chargers may become obsolete as new standards (CCS2, NACS) emerge.", "source_page": 30 },
+        { "category": "Competition from auto OEMs", "severity": "Medium", "summary": "Auto manufacturers like Tata and MG are building proprietary charging networks. This vertical integration could reduce demand for third-party charging providers.", "source_page": 35 }
+      ],
+      "score_inputs": { "profitability": 4.5, "growth": 8.5, "valuation": 3.5, "balance_sheet": 5.5, "business_quality": 7.0, "risk": 5.0 }
+    },
+
+    {
+      "name": "Ather Energy",
+      "slug": "ather-energy",
+      "sector": "Electric Vehicles",
+      "exchange": "NSE / BSE",
+      "description": "Ather Energy is an Indian electric two-wheeler manufacturer known for its premium e-scooters (Ather 450X, 450S, Rizta). It also builds and operates Ather Grid, a public fast-charging network. Backed by Hero MotoCorp, Ather is considered a technology leader in the Indian EV space with strong brand recognition among urban buyers. The company is loss-making but narrowing losses.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 2980.76,
+        "price_low": 304,
+        "price_high": 321,
+        "issue_date": "2025-04-28",
+        "listing_date": "2025-05-06",
+        "fresh_issue_crore": 2626,
+        "ofs_crore": 354.76
+      },
+      "financials": [
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 1789.10, "ebitda": -850, "pat": -1059.70, "total_debt": 900, "cash": 600, "equity": 1800 },
+        { "fiscal_year": "FY25", "period_end": "2025-03-31", "revenue": 2305.22, "ebitda": -600, "pat": -812.28, "total_debt": 850, "cash": 500, "equity": 1500 },
+        { "fiscal_year": "FY26", "period_end": "2026-03-31", "revenue": 3823.08, "ebitda": -280, "pat": -517.17, "total_debt": 800, "cash": 2500, "equity": 3600 }
+      ],
+      "valuation": { "date": "2025-05-06", "market_cap": 18000, "pe": null, "ps": 4.71, "ev_ebitda": null, "ev_sales": 4.27 },
+      "risk_factors": [
+        { "category": "Continued losses", "severity": "High", "summary": "The company has reported net losses since inception. While losses are narrowing, achieving profitability remains dependent on scale and cost optimization.", "source_page": 23 },
+        { "category": "Intense EV competition", "severity": "High", "summary": "Faces competition from Ola Electric, TVS iQube, Bajaj Chetak, and new entrants. Price wars in the electric scooter segment are intensifying.", "source_page": 28 },
+        { "category": "Battery technology and supply chain", "severity": "Medium", "summary": "Dependent on imported lithium-ion battery cells. Supply chain disruptions, raw material price spikes, or battery technology shifts could impact costs and competitiveness.", "source_page": 34 }
+      ],
+      "score_inputs": { "profitability": 2.5, "growth": 8.5, "valuation": 5.0, "balance_sheet": 4.5, "business_quality": 7.5, "risk": 4.0 }
+    },
+
+    {
+      "name": "Acme Solar Holdings",
+      "slug": "acme-solar-holdings",
+      "sector": "Renewable Energy",
+      "exchange": "NSE / BSE",
+      "description": "ACME Solar Holdings is an independent solar power producer (IPP) with a portfolio of operating and under-construction solar projects across India. Unlike module manufacturers, ACME generates revenue by selling electricity from its solar assets under long-term Power Purchase Agreements (PPAs) with state utilities and corporate buyers.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 2900,
+        "price_low": 275,
+        "price_high": 289,
+        "issue_date": "2024-11-06",
+        "listing_date": "2024-11-13",
+        "fresh_issue_crore": 2395,
+        "ofs_crore": 505
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 1488, "ebitda": 1050, "pat": 62, "total_debt": 8500, "cash": 400, "equity": 2800 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 1295, "ebitda": 900, "pat": -3, "total_debt": 8200, "cash": 350, "equity": 2797 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 1319, "ebitda": 950, "pat": 698, "total_debt": 7800, "cash": 500, "equity": 3495 }
+      ],
+      "valuation": { "date": "2024-11-13", "market_cap": 10200, "pe": 14.6, "ps": 7.73, "ev_ebitda": 18.4, "ev_sales": 13.3 },
+      "risk_factors": [
+        { "category": "High leverage", "severity": "High", "summary": "Solar IPP business is capital-intensive with high debt levels. Debt-to-equity ratio is elevated. Rising interest rates can significantly impact profitability.", "source_page": 25 },
+        { "category": "PPA and tariff risk", "severity": "High", "summary": "Revenue depends on long-term PPAs with state utilities. Payment delays by DISCOMs and tariff renegotiation attempts by states are common industry risks.", "source_page": 30 },
+        { "category": "Exceptional items in financials", "severity": "Medium", "summary": "FY24 profit included a significant exceptional gain from sale of solar assets. Core operating profitability is lower than headline PAT suggests.", "source_page": 36 }
+      ],
+      "score_inputs": { "profitability": 5.0, "growth": 4.0, "valuation": 6.5, "balance_sheet": 3.5, "business_quality": 6.0, "risk": 4.5 }
+    },
+
+    {
+      "name": "Zaggle Prepaid",
+      "slug": "zaggle-prepaid",
+      "sector": "Fintech",
+      "exchange": "NSE / BSE",
+      "description": "Zaggle Prepaid Ocean Services is a B2B fintech company providing SaaS-based spend management solutions. Its products include corporate expense management, prepaid cards, rewards and incentives platforms, and channel partner payouts. Clients use Zaggle to digitize employee reimbursements, vendor payments, and incentive distribution.",
+      "ipo": {
+        "status": "Listed",
+        "issue_size_crore": 563.38,
+        "price_low": 156,
+        "price_high": 164,
+        "issue_date": "2023-09-14",
+        "listing_date": "2023-09-28",
+        "fresh_issue_crore": 392,
+        "ofs_crore": 171.38
+      },
+      "financials": [
+        { "fiscal_year": "FY22", "period_end": "2022-03-31", "revenue": 371.66, "ebitda": 55, "pat": 41.92, "total_debt": 20, "cash": 60, "equity": 180 },
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 554.58, "ebitda": 40, "pat": 22.90, "total_debt": 15, "cash": 80, "equity": 203 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 786.87, "ebitda": 65, "pat": 44.02, "total_debt": 10, "cash": 120, "equity": 640 }
+      ],
+      "valuation": { "date": "2024-03-31", "market_cap": 5800, "pe": 131.8, "ps": 7.37, "ev_ebitda": 87.4, "ev_sales": 7.22 },
+      "risk_factors": [
+        { "category": "Revenue model transition risk", "severity": "Medium", "summary": "The company is transitioning from a transaction-fee model to SaaS subscriptions. This transition may cause short-term revenue volatility as pricing models change.", "source_page": 25 },
+        { "category": "Regulatory risk in prepaid instruments", "severity": "Medium", "summary": "Prepaid payment instruments are regulated by RBI. Changes in KYC requirements, float management rules, or PPI guidelines could impact operations.", "source_page": 30 },
+        { "category": "Competition from banks and fintechs", "severity": "Medium", "summary": "Banks and larger fintech companies like Paytm and PhonePe offer competing corporate payment solutions. Their scale and distribution advantage create competitive pressure.", "source_page": 35 }
+      ],
+      "score_inputs": { "profitability": 5.5, "growth": 8.0, "valuation": 3.5, "balance_sheet": 8.0, "business_quality": 7.0, "risk": 6.0 }
+    }
+  ]
+}

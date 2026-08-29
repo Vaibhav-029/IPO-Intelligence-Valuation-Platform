@@ -115,6 +115,30 @@ def list_ipos(q: str | None = None, sector: str | None = None, status_filter: st
     scores = {item.ipo_id: item for item in db.scalars(select(IPOSCore)).all()}
     return {"items": [ipo_payload(ipo, scores.get(ipo.id)) for ipo in records], "page": page, "page_size": min(page_size, 50)}
 
+@app.get("/api/v1/ipos/summary")
+def ipos_summary(db: Session = Depends(get_db)):
+    """Return count of IPOs grouped by lifecycle status."""
+    from sqlalchemy import func
+    rows = db.execute(select(IPO.status, func.count(IPO.id)).group_by(IPO.status)).all()
+    counts = {row[0]: row[1] for row in rows}
+    return {
+        "upcoming": counts.get("Upcoming", 0),
+        "open": counts.get("Open", 0),
+        "closed": counts.get("Closed", 0),
+        "listed": counts.get("Listed", 0),
+        "total": sum(counts.values()),
+    }
+
+
+@app.post("/api/v1/ipos/sync")
+def sync_ipos_endpoint(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Trigger an IPO data sync from the configured provider."""
+    from app.providers import SeedFileProvider
+    from app.services.sync import sync_ipos
+    provider = SeedFileProvider()
+    report = sync_ipos(db, provider)
+    return report.to_dict()
+
 
 @app.get("/api/v1/ipos/{ipo_id}")
 def get_ipo(ipo_id: int, db: Session = Depends(get_db)):

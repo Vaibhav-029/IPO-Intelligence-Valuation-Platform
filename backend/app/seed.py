@@ -23,7 +23,7 @@ Each company gets a transparent composite score (0-10) using weighted factors:
 
 import hashlib
 import json
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 from sqlalchemy import select
@@ -150,6 +150,8 @@ def seed_demo_data(db: Session) -> None:
             ),
             fresh_issue=ipo_data.get("fresh_issue_crore", 0),
             ofs=ipo_data.get("ofs_crore", 0),
+            data_source="seed",
+            last_synced_at=datetime.utcnow(),
         )
         db.add(ipo)
         db.flush()

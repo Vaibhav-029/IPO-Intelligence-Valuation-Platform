@@ -42,6 +42,8 @@ class IPO(Timestamped, Base):
     listing_date: Mapped[Optional[datetime]] = mapped_column(Date, nullable=True)
     fresh_issue: Mapped[float] = mapped_column(Numeric(16, 2), default=0)
     ofs: Mapped[float] = mapped_column(Numeric(16, 2), default=0)
+    data_source: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    last_synced_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     company: Mapped[Company] = relationship(back_populates="ipos")
 
 

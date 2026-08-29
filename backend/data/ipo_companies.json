@@ -10,7 +10,7 @@
     "currency": "INR Crore",
     "last_updated": "2026-08-19",
     "disclaimer": "All financial data is sourced from public filings and financial aggregators. Values may vary slightly across sources due to restatements. Always validate against official SEBI filings before investment decisions.",
-    "total_companies": 20
+    "total_companies": 28
   },
 
   "companies": [
@@ -642,6 +642,188 @@
         { "category": "Competition from banks and fintechs", "severity": "Medium", "summary": "Banks and larger fintech companies like Paytm and PhonePe offer competing corporate payment solutions. Their scale and distribution advantage create competitive pressure.", "source_page": 35 }
       ],
       "score_inputs": { "profitability": 5.5, "growth": 8.0, "valuation": 3.5, "balance_sheet": 8.0, "business_quality": 7.0, "risk": 6.0 }
+    },
+
+    {
+      "name": "HDB Financial Services",
+      "slug": "hdb-financial-services",
+      "sector": "Financial Services",
+      "exchange": "NSE / BSE",
+      "description": "HDB Financial Services is a subsidiary of HDFC Bank, offering lending products including consumer loans, enterprise loans, and asset finance. RBI mandated HDFC Bank to list HDB by September 2025. The DRHP was filed in late 2024.",
+      "ipo": {
+        "status": "Upcoming",
+        "issue_size_crore": 12500,
+        "price_low": 0,
+        "price_high": 0,
+        "issue_date": "2025-09-15",
+        "fresh_issue_crore": 2500,
+        "ofs_crore": 10000
+      },
+      "financials": [
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 11720, "ebitda": 3800, "pat": 2460, "total_debt": 58000, "cash": 4200, "equity": 13500 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 14100, "ebitda": 4500, "pat": 2900, "total_debt": 65000, "cash": 5000, "equity": 16400 }
+      ],
+      "risk_factors": [
+        { "category": "Regulatory mandate", "severity": "High", "summary": "RBI mandated listing by September 2025. Regulatory compliance timelines and market conditions at the time of listing create uncertainty.", "source_page": 12 },
+        { "category": "Parent dependency", "severity": "Medium", "summary": "Significant operational and brand dependency on HDFC Bank. Any adverse development at the parent level could impact HDB.", "source_page": 18 }
+      ],
+      "score_inputs": { "profitability": 7.5, "growth": 7.0, "valuation": 5.0, "balance_sheet": 5.5, "business_quality": 8.0, "risk": 6.0 }
+    },
+
+    {
+      "name": "LG Electronics India",
+      "slug": "lg-electronics-india",
+      "sector": "Consumer Electronics",
+      "exchange": "NSE / BSE",
+      "description": "LG Electronics India is the Indian subsidiary of South Korea's LG Electronics. It manufactures and sells consumer electronics including televisions, washing machines, refrigerators, and air conditioners. DRHP filed with SEBI in early 2025 for a pure OFS IPO.",
+      "ipo": {
+        "status": "Upcoming",
+        "issue_size_crore": 15000,
+        "price_low": 0,
+        "price_high": 0,
+        "issue_date": "2025-10-01",
+        "fresh_issue_crore": 0,
+        "ofs_crore": 15000
+      },
+      "financials": [
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 19850, "ebitda": 1750, "pat": 1185, "total_debt": 450, "cash": 2100, "equity": 6800 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 22400, "ebitda": 2100, "pat": 1450, "total_debt": 400, "cash": 2800, "equity": 8250 }
+      ],
+      "risk_factors": [
+        { "category": "Pure OFS — no company proceeds", "severity": "Medium", "summary": "The entire IPO is an Offer for Sale by the Korean parent. No fresh capital is raised for the Indian entity, limiting growth investment from IPO proceeds.", "source_page": 15 },
+        { "category": "Competition in consumer durables", "severity": "Medium", "summary": "Intense competition from Samsung, Voltas, Daikin, and emerging Chinese brands. Market share pressure requires continuous R&D and marketing investment.", "source_page": 22 }
+      ],
+      "score_inputs": { "profitability": 6.5, "growth": 6.0, "valuation": 5.5, "balance_sheet": 8.5, "business_quality": 7.5, "risk": 6.5 }
+    },
+
+    {
+      "name": "Hexaware Technologies",
+      "slug": "hexaware-technologies",
+      "sector": "Technology",
+      "exchange": "NSE / BSE",
+      "description": "Hexaware Technologies is a global IT services and BPS company. It was delisted from Indian exchanges in 2020 and is now seeking re-listing via a fresh IPO. Carlyle Group is the promoter. Services span application modernization, cloud, data, and AI.",
+      "ipo": {
+        "status": "Upcoming",
+        "issue_size_crore": 9950,
+        "price_low": 0,
+        "price_high": 0,
+        "issue_date": "2025-08-25",
+        "fresh_issue_crore": 0,
+        "ofs_crore": 9950
+      },
+      "financials": [
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 10420, "ebitda": 1780, "pat": 1200, "total_debt": 320, "cash": 1500, "equity": 5200 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 11800, "ebitda": 2050, "pat": 1380, "total_debt": 280, "cash": 1800, "equity": 6580 }
+      ],
+      "risk_factors": [
+        { "category": "Promoter exit risk", "severity": "High", "summary": "Carlyle Group is selling its entire stake via OFS. Post-listing, the company will have no identifiable promoter, which some investors view as a governance concern.", "source_page": 14 },
+        { "category": "Client concentration", "severity": "Medium", "summary": "Top 10 clients account for over 40% of revenue. Loss of a major client or contract non-renewal could materially impact growth.", "source_page": 20 }
+      ],
+      "score_inputs": { "profitability": 7.0, "growth": 6.5, "valuation": 5.0, "balance_sheet": 8.0, "business_quality": 7.5, "risk": 6.0 }
+    },
+
+    {
+      "name": "Ventive Hospitality",
+      "slug": "ventive-hospitality",
+      "sector": "Hospitality",
+      "exchange": "NSE / BSE",
+      "description": "Ventive Hospitality is a luxury hospitality company operating premium hotels under brands like JW Marriott, Conrad, and Hilton in India and the Maldives. It is the hospitality arm of the Panchshil Group.",
+      "ipo": {
+        "status": "Open",
+        "issue_size_crore": 1600,
+        "price_low": 610,
+        "price_high": 643,
+        "issue_date": "2025-08-27",
+        "fresh_issue_crore": 1600,
+        "ofs_crore": 0
+      },
+      "financials": [
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 780, "ebitda": 310, "pat": -45, "total_debt": 3200, "cash": 150, "equity": 1800 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 1050, "ebitda": 440, "pat": 22, "total_debt": 2900, "cash": 200, "equity": 1822 }
+      ],
+      "risk_factors": [
+        { "category": "High leverage", "severity": "High", "summary": "Debt-to-equity ratio is elevated due to asset-heavy hotel development. Interest costs consume a significant portion of operating profit.", "source_page": 18 },
+        { "category": "Cyclical demand", "severity": "Medium", "summary": "Luxury hospitality demand is highly cyclical and sensitive to economic downturns, travel restrictions, and geopolitical events.", "source_page": 24 }
+      ],
+      "score_inputs": { "profitability": 4.0, "growth": 7.0, "valuation": 5.5, "balance_sheet": 3.5, "business_quality": 6.5, "risk": 5.0 }
+    },
+
+    {
+      "name": "Stallion India Fluorochemicals",
+      "slug": "stallion-india-fluorochemicals",
+      "sector": "Chemicals",
+      "exchange": "NSE / BSE",
+      "description": "Stallion India Fluorochemicals is a specialty chemicals company focused on refrigerant gases and related fluorochemicals. It caters to the HVAC-R, automotive, and industrial sectors across India and exports.",
+      "ipo": {
+        "status": "Open",
+        "issue_size_crore": 501,
+        "price_low": 85,
+        "price_high": 90,
+        "issue_date": "2025-08-28",
+        "fresh_issue_crore": 200,
+        "ofs_crore": 301
+      },
+      "financials": [
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 920, "ebitda": 120, "pat": 72, "total_debt": 80, "cash": 45, "equity": 280 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 1050, "ebitda": 145, "pat": 88, "total_debt": 65, "cash": 55, "equity": 368 }
+      ],
+      "risk_factors": [
+        { "category": "Commodity price volatility", "severity": "High", "summary": "Fluorochemical prices are volatile and linked to global supply-demand dynamics. Chinese dumping of refrigerant gases has historically impacted Indian manufacturers.", "source_page": 16 },
+        { "category": "Regulatory and environmental risk", "severity": "Medium", "summary": "Fluorochemical manufacturing is subject to evolving environmental regulations including the Kigali Amendment and phase-down of HFCs.", "source_page": 22 }
+      ],
+      "score_inputs": { "profitability": 6.0, "growth": 6.5, "valuation": 6.0, "balance_sheet": 7.0, "business_quality": 6.0, "risk": 5.5 }
+    },
+
+    {
+      "name": "Arkade Developers",
+      "slug": "arkade-developers",
+      "sector": "Real Estate",
+      "exchange": "NSE / BSE",
+      "description": "Arkade Developers is a Mumbai-based real estate company focused on residential redevelopment projects in the western suburbs of Mumbai. The company specializes in slum rehabilitation and old building redevelopment under MHADA and SRA schemes.",
+      "ipo": {
+        "status": "Closed",
+        "issue_size_crore": 410,
+        "price_low": 121,
+        "price_high": 128,
+        "issue_date": "2025-08-20",
+        "fresh_issue_crore": 410,
+        "ofs_crore": 0
+      },
+      "financials": [
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 245, "ebitda": 95, "pat": 62, "total_debt": 45, "cash": 30, "equity": 220 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 380, "ebitda": 155, "pat": 105, "total_debt": 35, "cash": 50, "equity": 325 }
+      ],
+      "risk_factors": [
+        { "category": "Geographic concentration", "severity": "High", "summary": "All projects are concentrated in Mumbai's western suburbs. Any localized regulatory change, real estate downturn, or infrastructure disruption disproportionately impacts the company.", "source_page": 14 },
+        { "category": "Regulatory approvals", "severity": "Medium", "summary": "Redevelopment projects require multiple regulatory approvals including SRA, BMC, and environmental clearances. Delays in approvals can significantly impact project timelines.", "source_page": 20 }
+      ],
+      "score_inputs": { "profitability": 7.0, "growth": 8.0, "valuation": 6.0, "balance_sheet": 7.5, "business_quality": 6.5, "risk": 5.5 }
+    },
+
+    {
+      "name": "Saraswati Saree Depot",
+      "slug": "saraswati-saree-depot",
+      "sector": "Retail",
+      "exchange": "NSE / BSE",
+      "description": "Saraswati Saree Depot is one of India's largest ethnic wear retailers, specializing in sarees and other traditional Indian garments. The company operates through a chain of retail stores primarily in Maharashtra and Gujarat.",
+      "ipo": {
+        "status": "Closed",
+        "issue_size_crore": 160,
+        "price_low": 152,
+        "price_high": 160,
+        "issue_date": "2025-08-22",
+        "fresh_issue_crore": 80,
+        "ofs_crore": 80
+      },
+      "financials": [
+        { "fiscal_year": "FY23", "period_end": "2023-03-31", "revenue": 410, "ebitda": 42, "pat": 28, "total_debt": 15, "cash": 12, "equity": 95 },
+        { "fiscal_year": "FY24", "period_end": "2024-03-31", "revenue": 490, "ebitda": 52, "pat": 35, "total_debt": 10, "cash": 18, "equity": 130 }
+      ],
+      "risk_factors": [
+        { "category": "Single product category", "severity": "Medium", "summary": "Heavy dependence on saree sales. Fashion trends, online competition, and changing consumer preferences could impact demand.", "source_page": 12 },
+        { "category": "Limited geographic presence", "severity": "Medium", "summary": "Operations concentrated in Maharashtra and Gujarat. Expansion into other states involves execution risk and significant capital investment.", "source_page": 16 }
+      ],
+      "score_inputs": { "profitability": 5.5, "growth": 6.5, "valuation": 6.5, "balance_sheet": 7.5, "business_quality": 5.5, "risk": 6.0 }
     }
   ]
 }

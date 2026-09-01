@@ -123,7 +123,7 @@ def ipos_summary(db: Session = Depends(get_db)):
     counts = {row[0]: row[1] for row in rows}
     return {
         "upcoming": counts.get("Upcoming", 0),
-        "open": counts.get("Open", 0),
+        "ongoing": counts.get("Ongoing", 0),
         "closed": counts.get("Closed", 0),
         "listed": counts.get("Listed", 0),
         "total": sum(counts.values()),

@@ -238,7 +238,7 @@ export default function IPOPage() {
             {risks.map(r => (
               <div className="risk" key={r.id}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <span className={`label status-badge ${r.severity.toLowerCase() === 'high' ? 'upcoming' : 'open'}`}>
+                  <span className={`label status-badge ${r.severity.toLowerCase() === 'high' ? 'upcoming' : 'ongoing'}`}>
                     {r.severity}
                   </span>
                   <span style={{ fontSize: 12, color: "var(--dimmed)", display: "flex", alignItems: "center", gap: 4 }}>

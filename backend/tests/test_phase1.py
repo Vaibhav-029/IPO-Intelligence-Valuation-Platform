@@ -39,7 +39,7 @@ def test_seed_creates_all_lifecycle_statuses():
 
     assert counts["Listed"] > 0, "No Listed IPOs found"
     assert counts["Upcoming"] > 0, "No Upcoming IPOs found"
-    assert counts["Open"] > 0, "No Open IPOs found"
+    assert counts["Ongoing"] > 0, "No Ongoing IPOs found"
     assert counts["Closed"] > 0, "No Closed IPOs found"
     assert sum(counts.values()) == 28, f"Expected 28 total IPOs, got {sum(counts.values())}"
 
@@ -54,7 +54,7 @@ def test_seed_counts_match_expected():
 
     assert counts["Listed"] == 21
     assert counts["Upcoming"] == 3
-    assert counts["Open"] == 2
+    assert counts["Ongoing"] == 2
     assert counts["Closed"] == 2
 
     db.close()
@@ -87,13 +87,13 @@ def test_status_filtering_upcoming():
     db.close()
 
 
-def test_status_filtering_open():
-    """Filtering by 'Open' should return only Open IPOs."""
+def test_status_filtering_ongoing():
+    """Filtering by 'Ongoing' should return only Ongoing IPOs."""
     db = _fresh_db()
-    open_ipos = db.scalars(select(IPO).where(IPO.status == "Open")).all()
-    assert len(open_ipos) == 2
-    for ipo in open_ipos:
-        assert ipo.status == "Open"
+    ongoing_ipos = db.scalars(select(IPO).where(IPO.status == "Ongoing")).all()
+    assert len(ongoing_ipos) == 2
+    for ipo in ongoing_ipos:
+        assert ipo.status == "Ongoing"
     db.close()
 
 
@@ -226,7 +226,7 @@ def test_provider_skips_invalid_records():
         assert isinstance(record, NormalizedIPO)
         assert record.name
         assert record.slug
-        assert record.status in {"Upcoming", "Open", "Closed", "Listed"}
+        assert record.status in {"Upcoming", "Ongoing", "Closed", "Listed"}
 
 
 # ── 6. Provider failure handling ─────────────────────────────────────

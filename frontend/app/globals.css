@@ -864,7 +864,7 @@ p {
   border: 1px solid rgba(68, 215, 209, 0.2);
 }
 
-.status-badge.open {
+.status-badge.ongoing {
   color: var(--green);
   background: rgba(74, 222, 128, 0.1);
   border: 1px solid rgba(74, 222, 128, 0.2);

@@ -105,6 +105,29 @@ def sync_ipos(db: Session, provider: IPOProvider) -> SyncReport:
     return report
 
 
+def _ipo_kwargs(record: NormalizedIPO) -> dict:
+    """Build the common kwargs for creating/updating an IPO record."""
+    return dict(
+        status=record.status,
+        issue_size=record.issue_size_crore,
+        price_low=record.price_low,
+        price_high=record.price_high,
+        issue_date=_parse_date(record.issue_date),
+        open_date=_parse_date(record.open_date),
+        close_date=_parse_date(record.close_date),
+        listing_date=_parse_date(record.listing_date),
+        fresh_issue=record.fresh_issue_crore,
+        ofs=record.ofs_crore,
+        lot_size=record.lot_size,
+        min_investment=record.min_investment,
+        face_value=record.face_value,
+        shares_offered=record.shares_offered,
+        data_source=record.data_source,
+        source_url=record.source_url,
+        last_synced_at=datetime.utcnow(),
+    )
+
+
 def _sync_single_record(db: Session, record: NormalizedIPO, report: SyncReport) -> None:
     """Process a single normalized IPO record."""
     # Look up by slug
@@ -115,26 +138,14 @@ def _sync_single_record(db: Session, record: NormalizedIPO, report: SyncReport) 
         company = Company(
             name=record.name,
             slug=record.slug,
-            sector=record.sector,
+            sector=record.sector or "Unknown",
             exchange=record.exchange,
             description=record.description,
         )
         db.add(company)
         db.flush()
 
-        ipo = IPO(
-            company_id=company.id,
-            status=record.status,
-            issue_size=record.issue_size_crore,
-            price_low=record.price_low,
-            price_high=record.price_high,
-            issue_date=_parse_date(record.issue_date),
-            listing_date=_parse_date(record.listing_date),
-            fresh_issue=record.fresh_issue_crore,
-            ofs=record.ofs_crore,
-            data_source=record.data_source,
-            last_synced_at=datetime.utcnow(),
-        )
+        ipo = IPO(company_id=company.id, **_ipo_kwargs(record))
         db.add(ipo)
         db.flush()
         report.added += 1
@@ -145,19 +156,7 @@ def _sync_single_record(db: Session, record: NormalizedIPO, report: SyncReport) 
 
     if ipo is None:
         # Company exists but no IPO — shouldn't happen normally, but handle it
-        ipo = IPO(
-            company_id=company.id,
-            status=record.status,
-            issue_size=record.issue_size_crore,
-            price_low=record.price_low,
-            price_high=record.price_high,
-            issue_date=_parse_date(record.issue_date),
-            listing_date=_parse_date(record.listing_date),
-            fresh_issue=record.fresh_issue_crore,
-            ofs=record.ofs_crore,
-            data_source=record.data_source,
-            last_synced_at=datetime.utcnow(),
-        )
+        ipo = IPO(company_id=company.id, **_ipo_kwargs(record))
         db.add(ipo)
         db.flush()
         report.added += 1
@@ -165,16 +164,11 @@ def _sync_single_record(db: Session, record: NormalizedIPO, report: SyncReport) 
 
     # IPO exists — check if it needs updating
     if _needs_update(ipo, record):
-        ipo.status = record.status
-        ipo.price_low = record.price_low
-        ipo.price_high = record.price_high
-        ipo.issue_size = record.issue_size_crore
-        ipo.issue_date = _parse_date(record.issue_date)
-        ipo.listing_date = _parse_date(record.listing_date)
-        ipo.data_source = record.data_source
-        ipo.last_synced_at = datetime.utcnow()
+        for key, value in _ipo_kwargs(record).items():
+            setattr(ipo, key, value)
         report.updated += 1
     else:
         # No changes — just update sync timestamp
         ipo.last_synced_at = datetime.utcnow()
         report.skipped += 1
+

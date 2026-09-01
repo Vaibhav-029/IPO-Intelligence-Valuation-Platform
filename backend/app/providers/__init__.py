@@ -34,7 +34,7 @@ class NormalizedIPO(BaseModel):
     """
     name: str = Field(min_length=1, max_length=255)
     slug: str = Field(min_length=1, max_length=255)
-    sector: str = Field(min_length=1, max_length=100)
+    sector: Optional[str] = Field(default=None, max_length=100)
     exchange: str = Field(default="NSE / BSE", max_length=30)
     description: str = Field(default="")
     status: str = Field(default="Upcoming")
@@ -42,10 +42,17 @@ class NormalizedIPO(BaseModel):
     price_low: float = Field(ge=0)
     price_high: float = Field(ge=0)
     issue_date: Optional[str] = None
+    open_date: Optional[str] = None
+    close_date: Optional[str] = None
     listing_date: Optional[str] = None
-    fresh_issue_crore: float = Field(default=0, ge=0)
-    ofs_crore: float = Field(default=0, ge=0)
+    fresh_issue_crore: Optional[float] = None
+    ofs_crore: Optional[float] = None
+    lot_size: Optional[int] = None
+    min_investment: Optional[float] = None
+    face_value: Optional[float] = None
+    shares_offered: Optional[int] = None
     data_source: str = Field(default="seed")
+    source_url: Optional[str] = None
 
     # Optional nested data — may be absent for Upcoming IPOs
     financials: list[dict] = Field(default_factory=list)
@@ -56,12 +63,12 @@ class NormalizedIPO(BaseModel):
     @field_validator("status")
     @classmethod
     def validate_status(cls, v: str) -> str:
-        allowed = {"Upcoming", "Open", "Closed", "Listed"}
+        allowed = {"Upcoming", "Ongoing", "Closed", "Listed"}
         if v not in allowed:
             raise ValueError(f"Invalid status '{v}'. Must be one of: {allowed}")
         return v
 
-    @field_validator("issue_date", "listing_date", mode="before")
+    @field_validator("issue_date", "listing_date", "open_date", "close_date", mode="before")
     @classmethod
     def validate_date_format(cls, v):
         if v is None:

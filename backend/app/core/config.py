@@ -16,8 +16,13 @@ class Settings(BaseSettings):
     llm_provider: str = "groq"
     llm_model: str = "llama-3.3-70b-versatile"
     groq_api_key: str = ""
+    environment: str = "development"
     upload_dir: str = "./data/uploads"
     task_eager: bool = True
+
+    def model_post_init(self, __context) -> None:
+        if self.environment == "production" and self.jwt_secret == "local-development-secret-change-me":
+            raise ValueError("In production, a secure JWT_SECRET must be provided.")
 
     @property
     def cors_origin_list(self) -> list[str]:

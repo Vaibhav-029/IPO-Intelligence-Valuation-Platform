@@ -22,11 +22,13 @@ services:
       REDIS_URL: redis://redis:6379/0
       UPLOAD_DIR: /app/data/uploads
       TASK_EAGER: "false"
+      ENVIRONMENT: ${ENVIRONMENT:-production}
       JWT_SECRET: ${JWT_SECRET:-local-development-secret-change-me}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       LLM_PROVIDER: ${LLM_PROVIDER:-groq}
       LLM_MODEL: ${LLM_MODEL:-llama-3.3-70b-versatile}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     ports: ["8000:8000"]
     volumes: [./data:/app/data]
     depends_on:
@@ -39,6 +41,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       UPLOAD_DIR: /app/data/uploads
       TASK_EAGER: "false"
+      ENVIRONMENT: ${ENVIRONMENT:-production}
       JWT_SECRET: ${JWT_SECRET:-local-development-secret-change-me}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
     command: celery -A app.workers.celery_app worker --loglevel=INFO

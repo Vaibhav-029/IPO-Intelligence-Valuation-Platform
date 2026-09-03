@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, JSON, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, Float, ForeignKey, Integer, JSON, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
@@ -47,7 +47,11 @@ class IPO(Timestamped, Base):
     lot_size: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     min_investment: Mapped[Optional[float]] = mapped_column(Numeric(12, 2), nullable=True)
     face_value: Mapped[Optional[float]] = mapped_column(Numeric(12, 2), nullable=True)
-    shares_offered: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    shares_offered: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    pre_issue_shares: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    post_issue_shares: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    fresh_issue_shares: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    ofs_shares: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
     data_source: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     source_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     last_synced_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
@@ -60,24 +64,45 @@ class FinancialPeriod(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
     period_end: Mapped[datetime] = mapped_column(Date)
-    period_type: Mapped[str] = mapped_column(String(20), default="FY")
+    
+    # Authoritative period classification: "Annual" or "Interim"
+    period_type: Mapped[str] = mapped_column(String(20), default="Annual")
+    # Specific interim designation if applicable (e.g., "Q1", "H1", "Q3", "9M")
+    interim_period: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    
     fiscal_year: Mapped[str] = mapped_column(String(20))
     metrics: Mapped["FinancialMetric"] = relationship(back_populates="period", uselist=False, cascade="all, delete-orphan")
 
 
 class FinancialMetric(Base):
+    """Raw financial facts.
+    
+    Unit contract:
+    - All financial statement amounts (revenue, EBITDA, EBIT, PAT, total_debt, cash, equity, assets) are in INR Crore.
+    - EPS is in absolute INR per share.
+    - NULL indicates the value is unavailable or not reported.
+    - 0.0 indicates an explicitly reported zero.
+    """
     __tablename__ = "financial_metrics"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     period_id: Mapped[int] = mapped_column(ForeignKey("financial_periods.id"), unique=True)
-    revenue: Mapped[float] = mapped_column(Numeric(16, 2), default=0)
-    ebitda: Mapped[float] = mapped_column(Numeric(16, 2), default=0)
-    ebit: Mapped[float] = mapped_column(Numeric(16, 2), default=0)
-    pat: Mapped[float] = mapped_column(Numeric(16, 2), default=0)
-    eps: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
-    total_debt: Mapped[float] = mapped_column(Numeric(16, 2), default=0)
-    cash: Mapped[float] = mapped_column(Numeric(16, 2), default=0)
-    equity: Mapped[float] = mapped_column(Numeric(16, 2), default=0)
-    assets: Mapped[float] = mapped_column(Numeric(16, 2), default=0)
+    
+    # Financial fields
+    revenue: Mapped[Optional[float]] = mapped_column(Numeric(16, 2), nullable=True)
+    ebitda: Mapped[Optional[float]] = mapped_column(Numeric(16, 2), nullable=True)
+    ebit: Mapped[Optional[float]] = mapped_column(Numeric(16, 2), nullable=True)
+    pat: Mapped[Optional[float]] = mapped_column(Numeric(16, 2), nullable=True)
+    eps: Mapped[Optional[float]] = mapped_column(Numeric(12, 2), nullable=True)
+    total_debt: Mapped[Optional[float]] = mapped_column(Numeric(16, 2), nullable=True)
+    cash: Mapped[Optional[float]] = mapped_column(Numeric(16, 2), nullable=True)
+    equity: Mapped[Optional[float]] = mapped_column(Numeric(16, 2), nullable=True)
+    assets: Mapped[Optional[float]] = mapped_column(Numeric(16, 2), nullable=True)
+    
+    # Provenance fields
+    source_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    source_reference: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    derived_fields: Mapped[dict] = mapped_column(JSON, default=dict)
+    
     period: Mapped[FinancialPeriod] = relationship(back_populates="metrics")
 
 
@@ -92,16 +117,22 @@ class Peer(Base):
 
 
 class ValuationMetric(Base):
+    """Phase 2B Note:
+    These fields represent derived valuation multiples (pe, ps, ev_ebitda, ev_sales).
+    In Phase 2B, the platform will migrate to calculating these dynamically from raw 
+    financial facts and market cap. They remain structurally compatible here for now.
+    """
     __tablename__ = "valuation_metrics"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
+    context: Mapped[str] = mapped_column(String(30), default="CURRENT_MARKET", server_default="CURRENT_MARKET")
     date: Mapped[datetime] = mapped_column(Date)
-    market_cap: Mapped[float] = mapped_column(Numeric(16, 2))
-    ev: Mapped[float] = mapped_column(Numeric(16, 2))
-    pe: Mapped[float] = mapped_column(Float, nullable=True)
-    ps: Mapped[float] = mapped_column(Float, nullable=True)
-    ev_ebitda: Mapped[float] = mapped_column(Float, nullable=True)
-    ev_sales: Mapped[float] = mapped_column(Float, nullable=True)
+    market_cap: Mapped[Optional[float]] = mapped_column(Numeric(16, 2), nullable=True)
+    ev: Mapped[Optional[float]] = mapped_column(Numeric(16, 2), nullable=True)
+    pe: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    ps: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    ev_ebitda: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    ev_sales: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
 
 class RiskFactor(Timestamped, Base):
@@ -118,14 +149,16 @@ class IPOSCore(Timestamped, Base):
     __tablename__ = "ipo_scores"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     ipo_id: Mapped[int] = mapped_column(ForeignKey("ipos.id"), unique=True)
-    business_score: Mapped[float] = mapped_column(Float)
-    growth_score: Mapped[float] = mapped_column(Float)
-    profitability_score: Mapped[float] = mapped_column(Float)
-    valuation_score: Mapped[float] = mapped_column(Float)
-    risk_score: Mapped[float] = mapped_column(Float)
-    overall_score: Mapped[float] = mapped_column(Float)
-    methodology_version: Mapped[str] = mapped_column(String(40), default="v1.0")
-    notes: Mapped[dict] = mapped_column(JSON, default=dict)
+    financial_quality_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    growth_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    valuation_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    balance_sheet_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    business_quality_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    risk_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    overall_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    methodology_version: Mapped[str] = mapped_column(String(40), default="v4.0")
+    coverage: Mapped[dict] = mapped_column(JSON, default=dict)
+    explanations: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
 class Document(Timestamped, Base):
@@ -133,9 +166,12 @@ class Document(Timestamped, Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company_id: Mapped[Optional[int]] = mapped_column(ForeignKey("companies.id"), nullable=True, index=True)
     ipo_id: Mapped[Optional[int]] = mapped_column(ForeignKey("ipos.id"), nullable=True, index=True)
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=True)
     type: Mapped[str] = mapped_column(String(50), default="RHP")
+    filename: Mapped[str] = mapped_column(String(255), default="document.pdf")
     storage_url: Mapped[str] = mapped_column(String(500))
-    checksum: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    checksum: Mapped[str] = mapped_column(String(64), index=True)
     processing_status: Mapped[str] = mapped_column(String(30), default="queued")
     page_count: Mapped[int] = mapped_column(Integer, default=0)
     failure_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -146,11 +182,12 @@ class Source(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     document_id: Mapped[int] = mapped_column(ForeignKey("documents.id"), index=True)
     page: Mapped[int] = mapped_column(Integer)
-    section: Mapped[str] = mapped_column(String(255), default="Document page")
+    section: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     chunk_id: Mapped[str] = mapped_column(String(100), unique=True)
     text: Mapped[str] = mapped_column(Text)
     source_text_hash: Mapped[str] = mapped_column(String(64))
     confidence: Mapped[float] = mapped_column(Float, default=1.0)
+    is_empty: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class Job(Timestamped, Base):

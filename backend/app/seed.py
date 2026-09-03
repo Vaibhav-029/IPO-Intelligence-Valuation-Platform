@@ -26,7 +26,7 @@ import json
 from datetime import date, datetime
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 
 from app.models import (
@@ -41,6 +41,16 @@ from app.models import (
     Source,
     ValuationMetric,
 )
+
+import re
+
+def _normalize_period(fiscal_year: str) -> tuple[str, str | None]:
+    """Return (period_type, interim_period)."""
+    fy = fiscal_year.upper()
+    match = re.search(r'(Q[1-4]|H[12]|9M)', fy)
+    if match:
+        return "Interim", match.group(1)
+    return "Annual", None
 
 
 # ── Where the data lives ──────────────────────────────────────────────
@@ -156,44 +166,46 @@ def seed_demo_data(db: Session) -> None:
         db.add(ipo)
         db.flush()
 
+
         # ── 3. Create Financial Periods + Metrics ─────────────────────
         for fin in entry["financials"]:
+            ptype, interim = _normalize_period(fin["fiscal_year"])
             period = FinancialPeriod(
                 company_id=company.id,
                 period_end=_parse_date(fin["period_end"]),
-                period_type="FY",
+                period_type=ptype,
+                interim_period=interim,
                 fiscal_year=fin["fiscal_year"],
             )
             db.add(period)
             db.flush()
 
-            # Derived fields
-            revenue = fin["revenue"]
-            ebitda = fin["ebitda"]
-            pat = fin["pat"]
-
             db.add(
                 FinancialMetric(
                     period_id=period.id,
-                    revenue=revenue,
-                    ebitda=ebitda,
-                    ebit=ebitda * 0.85,  # Approximate: EBIT ≈ 85% of EBITDA
-                    pat=pat,
-                    eps=pat / 10,  # Simplified EPS
-                    total_debt=fin.get("total_debt", 0),
-                    cash=fin.get("cash", 0),
-                    equity=fin.get("equity", 0),
-                    assets=revenue * 1.4,  # Rough estimate
+                    revenue=fin.get("revenue"),
+                    ebitda=fin.get("ebitda"),
+                    ebit=fin.get("ebit"), 
+                    pat=fin.get("pat"),
+                    eps=fin.get("eps"), 
+                    total_debt=fin.get("total_debt"),
+                    cash=fin.get("cash"),
+                    equity=fin.get("equity"),
+                    assets=fin.get("assets"), 
+                    source_type="Curated Structured Dataset",
+                    source_reference="ipo_companies.json",
+                    derived_fields={}
                 )
             )
 
         # ── 4. Create Valuation Metrics ───────────────────────────────
         val = entry.get("valuation", {})
         if val:
-            ev = val["market_cap"] + (
-                entry["financials"][-1].get("total_debt", 0)
-                - entry["financials"][-1].get("cash", 0)
-            )
+            debt = entry["financials"][-1].get("total_debt")
+            cash = entry["financials"][-1].get("cash")
+            ev = None
+            if debt is not None and cash is not None:
+                ev = val["market_cap"] + debt - cash
             db.add(
                 ValuationMetric(
                     company_id=company.id,
@@ -219,47 +231,39 @@ def seed_demo_data(db: Session) -> None:
                 )
             )
 
-        # ── 6. Compute and store the IPO Score ───────────────────────
+        # Note: Score calculation (generate_ipo_score) happens dynamically below AFTER peers are set up,
+        # but we preserve the manually seeded business quality score.
         scores = entry.get("score_inputs", {})
-        if scores:
-            overall = _compute_overall_score(scores)
-            db.add(
-                IPOSCore(
-                    ipo_id=ipo.id,
-                    profitability_score=scores.get("profitability", 0),
-                    growth_score=scores.get("growth", 0),
-                    valuation_score=scores.get("valuation", 0),
-                    risk_score=scores.get("risk", 0),
-                    business_score=scores.get("business_quality", 0),
-                    overall_score=overall,
-                    methodology_version="v1.0",
-                    notes={
-                        "balance_sheet_score": scores.get("balance_sheet", 0),
-                        "source": "Manual assessment based on public financial data",
-                    },
-                )
-            )
+        bq_score = scores.get("business_quality", None)
+        setattr(ipo, "_manual_bq_score", bq_score)
 
         db_companies.append(company)
 
     # ── 7. Create Peer relationships ──────────────────────────────────
-    # Every company is a potential peer of every other company.
-    # In a real system, you'd curate this more carefully by sector.
+    # Clean up any existing peer relationships to remove stale all-to-all data
+    db.execute(delete(Peer))
     db.flush()
+    
+    # Create peers strictly based on same sector
     for company in db_companies:
         for peer in db_companies:
-            if peer.id != company.id:
+            if company.id != peer.id and company.sector and company.sector == peer.sector:
                 db.add(
                     Peer(
                         company_id=company.id,
                         peer_company_id=peer.id,
                         rationale=(
-                            "Cross-sector comparable from the Indian IPO universe. "
-                            "Peer analysis should weight sector-specific multiples."
+                            f"Same-sector comparable ({company.sector})."
                         ),
+                        active=True
                     )
                 )
-
+    # ── 8. Compute and store the IPO Score ───────────────────────
+    from app.analytics.scoring import generate_ipo_score
+    for company in db_companies:
+        for ipo in company.ipos:
+            generate_ipo_score(db, ipo.id, getattr(ipo, "_manual_bq_score", None))
+    db.flush()
     # ── 8. Create a demo Source document for evidence retrieval ────────
     if db_companies:
         first = db_companies[0]

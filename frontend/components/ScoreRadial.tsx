@@ -3,11 +3,11 @@ import React from "react";
 export default function ScoreRadial({ score }: { score: number }) {
   const radius = 18;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (score / 10) * circumference;
+  const strokeDashoffset = circumference - (score / 100) * circumference;
 
   let color = "var(--green)";
-  if (score < 5) color = "var(--red)";
-  else if (score < 7) color = "var(--gold)";
+  if (score < 50) color = "var(--red)";
+  else if (score < 70) color = "var(--gold)";
 
   return (
     <div className="score-radial">
@@ -33,7 +33,7 @@ export default function ScoreRadial({ score }: { score: number }) {
           style={{ transform: "rotate(-90deg)", transformOrigin: "50% 50%", transition: "stroke-dashoffset 1s ease-out" }}
         />
       </svg>
-      <div className="score-value">{score.toFixed(1)}</div>
+      <div className="score-value">{score.toFixed(0)}</div>
     </div>
   );
 }

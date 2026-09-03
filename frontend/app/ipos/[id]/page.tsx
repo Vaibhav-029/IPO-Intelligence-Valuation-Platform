@@ -13,7 +13,7 @@ import PeerComparison from "../../../components/PeerComparison";
 import { useAuth } from "../../../lib/AuthContext";
 
 type Any = Record<string, any>;
-const n = (value: any, suffix = "") => value === null || value === undefined ? "—" : `${Number(value).toFixed(1)}${suffix}`;
+const n = (value: any, suffix = "") => (value === null || value === undefined || Number.isNaN(Number(value))) ? "—" : `${Number(value).toFixed(1)}${suffix}`;
 
 export default function IPOPage() {
   const params = useParams<{ id: string }>(); 
@@ -187,32 +187,52 @@ export default function IPOPage() {
           
           <div style={{ marginTop: 24 }}>
             {[
-              ['Financial quality', score?.financial_quality],
-              ['Growth', score?.growth],
-              ['Valuation', score?.valuation],
-              ['Balance sheet', score?.balance_sheet],
-              ['Business quality', score?.business_quality],
-              ['Risk', score?.risk]
-            ].map(([label, value]) => (
-              <div className="metric-row" key={String(label)} style={{ padding: "12px 0", borderBottom: "1px solid var(--line)", fontSize: 14 }}>
-                <span>{label}</span>
-                <b style={{ color: "var(--ink)" }}>{n(value, '/10')}</b>
+              ['Financial quality', score?.dimensions?.financial_quality],
+              ['Growth', score?.dimensions?.growth],
+              ['Valuation', score?.dimensions?.valuation],
+              ['Balance sheet', score?.dimensions?.balance_sheet],
+              ['Business quality', score?.dimensions?.business_quality],
+              ['Risk', score?.dimensions?.risk]
+            ].map(([label, value]) => {
+              const val = typeof value === 'number' ? value.toFixed(0) : "N/A";
+              return (
+                <div className="metric-row" key={String(label)} style={{ padding: "12px 0", borderBottom: "1px solid var(--line)", fontSize: 14 }}>
+                  <span>{label}</span>
+                  <b style={{ color: "var(--ink)" }}>{val !== "N/A" ? `${val}/100` : "N/A"}</b>
+                </div>
+              );
+            })}
+            
+            {score?.coverage && score?.coverage.overall_effective_weight < 100 && (
+              <div style={{ marginTop: 12, padding: 8, background: "var(--surface)", borderRadius: 6, fontSize: 12, color: "var(--dimmed)" }}>
+                <b>Note:</b> Score redistributed (Effective coverage: {score.coverage.overall_effective_weight}%)
               </div>
-            ))}
+            )}
+            
+            {score?.explanations && (
+              <div style={{ marginTop: 16 }}>
+                <h4 style={{ fontSize: 13, marginBottom: 8 }}>Methodology Notes</h4>
+                {Object.entries(score.explanations).map(([k, v]) => (
+                  <div key={k} style={{ fontSize: 12, color: "var(--dimmed)", marginBottom: 4 }}>
+                    <b style={{textTransform: 'capitalize'}}>{k.replace('_', ' ')}:</b> {String(v)}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </aside>
 
         <div className="panel glass-panel">
           <div className="section-title">
             <h2>Valuation snapshot</h2>
-            <span className="chip">Comparable-company analysis</span>
+            <span className="chip">{valuation?.CURRENT_MARKET ? "Current Market" : "IPO at issue (upper band)"}</span>
           </div>
           <div className="metric-grid" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
             {[
-              ['Market cap', n(valuation?.market_cap)],
-              ['Enterprise value', n(valuation?.enterprise_value)],
-              ['P/S', n(valuation?.ps, 'x')],
-              ['EV / EBITDA', n(valuation?.ev_ebitda, 'x')]
+              ['Market cap', n(valuation?.CURRENT_MARKET?.market_cap || valuation?.IPO_AT_ISSUE?.upper_band?.implied_market_cap)],
+              ['Enterprise value', n(valuation?.CURRENT_MARKET?.enterprise_value || valuation?.IPO_AT_ISSUE?.upper_band?.enterprise_value)],
+              ['P/S', n(valuation?.CURRENT_MARKET?.ps || valuation?.IPO_AT_ISSUE?.upper_band?.ps, 'x')],
+              ['EV / EBITDA', n(valuation?.CURRENT_MARKET?.ev_ebitda || valuation?.IPO_AT_ISSUE?.upper_band?.ev_ebitda, 'x')]
             ].map(([label, value]) => (
               <div className="metric" key={String(label)}>
                 <span className="label">{label}</span>
@@ -282,17 +302,22 @@ export default function IPOPage() {
               <p style={{ color: 'var(--ink)', margin: "0 0 16px", lineHeight: 1.6 }}>{answer.answer}</p>
               
               <div className="label" style={{ marginBottom: 16 }}>
-                Tools used: <span style={{ color: "var(--gold)" }}>{answer.tool_trace.join(" → ")}</span> · Confidence: {answer.confidence}
+                Tools used: <span style={{ color: "var(--gold)" }}>{answer.tool_trace.join(" → ")}</span>
               </div>
               
               {answer.claims && answer.claims.length > 0 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {answer.claims.map((claim: Any, index: number) => (
-                    <div className="citation" key={index}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--dimmed)", marginBottom: 4 }}>
-                        Source · Document {claim.document_id}, Page {claim.page}
-                      </div>
-                      <div style={{ fontStyle: "italic", color: "var(--muted)" }}>"{claim.excerpt}"</div>
+                  {answer.claims.map((claim: any, index: number) => (
+                    <div className="claim-box" key={index} style={{ padding: "12px", background: "rgba(255,255,255,0.03)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                      <div style={{ color: "var(--ink)", marginBottom: 8, fontWeight: 500 }}>{claim.text}</div>
+                      {claim.citations && claim.citations.map((cite: any, cidx: number) => (
+                        <div className="citation" key={cidx} style={{ marginTop: 8, paddingLeft: 8, borderLeft: "2px solid var(--cyan)" }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--dimmed)", marginBottom: 4 }}>
+                            Source · Document {cite.document_id}, Page {cite.page} {cite.section ? `(${cite.section})` : ""}
+                          </div>
+                          <div style={{ fontStyle: "italic", color: "var(--muted)", fontSize: 13 }}>"{cite.excerpt}"</div>
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>

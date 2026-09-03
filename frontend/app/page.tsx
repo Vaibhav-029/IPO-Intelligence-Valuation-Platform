@@ -42,13 +42,11 @@ export default function Directory() {
           <div className="eyebrow">Research universe</div>
           <h2>IPO Directory</h2>
         </div>
-        <span className="chip">Real data · INR crore</span>
       </div>
       
       <div className="toolbar" style={{marginTop:16}}>
         <Search size={18} color="#8f9bb3"/>
         <input className="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search company or sector"/>
-        <button className="button secondary">Filter</button>
       </div>
       
       {error && <p>{error}</p>}

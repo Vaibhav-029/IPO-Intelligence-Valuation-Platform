@@ -10,6 +10,7 @@ An India-focused IPO research terminal built to demonstrate full-stack SDE and A
 - PDF upload with SHA-256 deduplication, durable job records, PyMuPDF page extraction, and citation-ready source chunks.
 - Evidence-first research API with structured tool traces and a safe local fallback. The provider configuration is intentionally isolated for a Groq-compatible adapter.
 - Next.js dashboard that makes the core five-minute demo available at `/` and `/ipos/:id`.
+- Production-hardened with Redis rate limiting, global exception handling, secure cookies, and safe database migration startup flow.
 
 ## Run locally
 

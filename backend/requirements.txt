@@ -14,3 +14,4 @@ httpx==0.28.1
 celery==5.4.0
 langgraph==0.2.62
 pytest==8.3.4
+redis==5.0.3

@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 
 class RegisterRequest(BaseModel):
@@ -30,12 +30,20 @@ class WatchlistRequest(BaseModel):
     ipo_id: int
 
 
-class DCFScenario(BaseModel):
-    revenue: float = Field(gt=0)
-    ebitda_margin: float = Field(ge=0, le=1)
-    tax_rate: float = Field(ge=0, le=1)
-    growth_rate: float = Field(ge=-.5, le=1)
-    discount_rate: float = Field(gt=0, le=1)
-    terminal_growth: float = Field(ge=0, lt=1)
+class DCFInput(BaseModel):
+    revenue_growth_rate: float = Field(ge=-0.5, le=1.0)
+    ebitda_margin: float = Field(ge=0, le=1.0)
+    tax_rate: float = Field(ge=0, le=1.0)
+    d_and_a_pct_of_revenue: float = Field(ge=0, le=1.0)
+    capex_pct_of_revenue: float = Field(ge=0, le=1.0)
+    change_in_nwc_pct_of_revenue: float = Field(ge=-1.0, le=1.0)
+    discount_rate: float = Field(gt=0, le=1.0)
+    terminal_growth_rate: float = Field(ge=0, lt=1.0)
     years: int = Field(default=5, ge=1, le=10)
+
+    @model_validator(mode="after")
+    def check_terminal_growth(self) -> "DCFInput":
+        if self.terminal_growth_rate >= self.discount_rate:
+            raise ValueError("terminal_growth_rate must be less than discount_rate")
+        return self
 

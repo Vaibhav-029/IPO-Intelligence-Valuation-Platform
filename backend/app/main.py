@@ -103,9 +103,27 @@ def as_float(value):
 
 
 def ipo_payload(ipo: IPO, score: IPOSCore | None = None) -> dict:
-    return {"id": ipo.id, "company_id": ipo.company_id, "name": ipo.company.name, "slug": ipo.company.slug, "sector": ipo.company.sector,
-            "exchange": ipo.company.exchange, "status": ipo.status, "issue_size_crore": as_float(ipo.issue_size), "price_band": [as_float(ipo.price_low), as_float(ipo.price_high)],
-            "issue_date": str(ipo.issue_date) if ipo.issue_date else None, "score": score.overall_score if score else None}
+    sector = ipo.company.sector if ipo.company.sector and ipo.company.sector != "Unknown" else None
+    logo_url = getattr(ipo.company, "logo_url", None) or getattr(ipo, "logo_url", None)
+    return {
+        "id": ipo.id,
+        "company_id": ipo.company_id,
+        "name": ipo.company.name,
+        "slug": ipo.company.slug,
+        "sector": sector,
+        "exchange": ipo.company.exchange,
+        "status": ipo.status,
+        "listing_segment": ipo.listing_segment,
+        "issue_size_crore": as_float(ipo.issue_size),
+        "price_band": [as_float(ipo.price_low), as_float(ipo.price_high)],
+        "issue_date": str(ipo.issue_date) if ipo.issue_date else None,
+        "open_date": str(ipo.open_date) if ipo.open_date else None,
+        "close_date": str(ipo.close_date) if ipo.close_date else None,
+        "listing_date": str(ipo.listing_date) if ipo.listing_date else None,
+        "data_source": ipo.data_source,
+        "score": score.overall_score if score else None,
+        "logo_url": logo_url,
+    }
 
 
 @app.get("/health")
@@ -159,11 +177,27 @@ def logout(response: Response, user: User = Depends(get_current_user), db: Sessi
 
 
 @app.get("/api/v1/ipos")
-def list_ipos(q: str | None = None, sector: str | None = None, status_filter: str | None = None, page: int = 1, page_size: int = 20, db: Session = Depends(get_db)):
+def list_ipos(q: str | None = None, sector: str | None = None, status_filter: str | None = None, page: int = 1, page_size: int = 50, db: Session = Depends(get_db)):
+    from datetime import date, timedelta
     statement = select(IPO).join(Company).options(joinedload(IPO.company)).order_by(IPO.issue_date.desc())
     if q: statement = statement.where((Company.name.ilike(f"%{q}%")) | (Company.sector.ilike(f"%{q}%")))
     if sector: statement = statement.where(Company.sector == sector)
-    if status_filter: statement = statement.where(IPO.status == status_filter)
+    if status_filter: 
+        statement = statement.where(IPO.status == status_filter)
+    else:
+        # Default feed: Ongoing, Upcoming, Recent Closed within window, Recent Listed within window
+        from sqlalchemy import func
+        today = date.today()
+        recent_closed_date = today - timedelta(days=settings.recently_closed_days)
+        recent_listed_date = today - timedelta(days=settings.recently_listed_days)
+
+        statement = statement.where(
+            (IPO.status == "Ongoing") |
+            (IPO.status == "Upcoming") |
+            ((IPO.status == "Closed") & (func.coalesce(IPO.close_date, IPO.issue_date) >= recent_closed_date)) |
+            ((IPO.status == "Listed") & (func.coalesce(IPO.listing_date, IPO.issue_date) >= recent_listed_date))
+        )
+        
     records = db.scalars(statement.offset((max(page, 1)-1)*min(page_size, 50)).limit(min(page_size, 50))).unique().all()
     scores = {item.ipo_id: item for item in db.scalars(select(IPOSCore)).all()}
     return {"items": [ipo_payload(ipo, scores.get(ipo.id)) for ipo in records], "page": page, "page_size": min(page_size, 50)}
@@ -187,10 +221,20 @@ def ipos_summary(db: Session = Depends(get_db)):
 def sync_ipos_endpoint(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Trigger an IPO data sync from the configured provider."""
     from app.providers import SeedFileProvider
+    from app.providers.live import LiveIPOProvider
     from app.services.sync import sync_ipos
-    provider = SeedFileProvider()
-    report = sync_ipos(db, provider)
-    return report.to_dict()
+    
+    # 1. Sync seed data for deep analytics
+    seed_report = sync_ipos(db, SeedFileProvider())
+    
+    # 2. Sync live data for current lifecycle and metadata
+    live_report = sync_ipos(db, LiveIPOProvider())
+    
+    return {
+        "seed": seed_report.to_dict(),
+        "live": live_report.to_dict(),
+        "total_processed": seed_report.total_processed + live_report.total_processed
+    }
 
 
 @app.get("/api/v1/ipos/{ipo_id}")

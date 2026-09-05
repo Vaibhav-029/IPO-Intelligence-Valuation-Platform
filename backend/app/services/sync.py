@@ -17,6 +17,7 @@ from datetime import date, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.lifecycle import compute_lifecycle_status, parse_date_safe
 from app.models import Company, IPO
 from app.providers import IPOProvider, NormalizedIPO
 
@@ -46,9 +47,7 @@ class SyncReport:
 
 
 def _parse_date(date_str: str | None) -> date | None:
-    if not date_str:
-        return None
-    return date.fromisoformat(date_str)
+    return parse_date_safe(date_str)
 
 
 def _needs_update(ipo: IPO, record: NormalizedIPO) -> bool:
@@ -58,6 +57,20 @@ def _needs_update(ipo: IPO, record: NormalizedIPO) -> bool:
         or float(ipo.price_low) != record.price_low
         or float(ipo.price_high) != record.price_high
         or float(ipo.issue_size) != record.issue_size_crore
+    )
+
+def _infer_lifecycle_status(record: NormalizedIPO) -> str:
+    """Infer the lifecycle status dynamically from dates.
+    
+    Uses the shared compute_lifecycle_status — never trusts static status
+    when dates are available.
+    """
+    return compute_lifecycle_status(
+        open_date=parse_date_safe(record.open_date),
+        close_date=parse_date_safe(record.close_date),
+        listing_date=parse_date_safe(record.listing_date),
+        issue_date=parse_date_safe(record.issue_date),
+        static_status=record.status,
     )
 
 
@@ -107,8 +120,14 @@ def sync_ipos(db: Session, provider: IPOProvider) -> SyncReport:
 
 def _ipo_kwargs(record: NormalizedIPO) -> dict:
     """Build the common kwargs for creating/updating an IPO record."""
+    status = _infer_lifecycle_status(record)
+    
+    # We must also update the record's status so _needs_update works correctly
+    record.status = status
+    
     return dict(
-        status=record.status,
+        status=status,
+        listing_segment=record.listing_segment,
         issue_size=record.issue_size_crore,
         price_low=record.price_low,
         price_high=record.price_high,
@@ -154,12 +173,23 @@ def _sync_single_record(db: Session, record: NormalizedIPO, report: SyncReport) 
     # Company exists — find the IPO record
     ipo = db.scalar(select(IPO).where(IPO.company_id == company.id))
 
+    # Enrich company sector and description if enriched and previously unknown
+    if record.sector and (not company.sector or company.sector == "Unknown"):
+        company.sector = record.sector
+    if record.description and not company.description:
+        company.description = record.description
+
     if ipo is None:
         # Company exists but no IPO — shouldn't happen normally, but handle it
         ipo = IPO(company_id=company.id, **_ipo_kwargs(record))
         db.add(ipo)
         db.flush()
         report.added += 1
+        return
+
+    # Guard: Never overwrite live records with seed records
+    if ipo.data_source == "live" and record.data_source == "seed":
+        report.skipped += 1
         return
 
     # IPO exists — check if it needs updating

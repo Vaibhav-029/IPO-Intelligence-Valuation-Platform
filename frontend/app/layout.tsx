@@ -13,11 +13,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" className={inter.variable}>
       <body>
         <AuthProvider>
-          <div className="shell">
-            <Navbar />
-            <AuthModal />
-            {children}
-          </div>
+          <Navbar />
+          <AuthModal />
+          {children}
         </AuthProvider>
       </body>
     </html>

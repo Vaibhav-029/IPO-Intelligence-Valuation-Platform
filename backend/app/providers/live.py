@@ -314,6 +314,48 @@ def _build_detail_lookup(table) -> dict[str, str]:
     return lookup
 
 
+def _extract_sector_from_text(desc: str) -> str | None:
+    """Extract a factual, source-backed sector from company description text.
+
+    Returns None if no definitive sector can be determined from the source text.
+    Never fabricates sectors.
+    """
+    if not desc:
+        return None
+    d = desc.lower()
+    if "real estate" in d:
+        return "Real Estate"
+    if "speciality chemicals" in d or "specialty chemicals" in d:
+        return "Specialty Chemicals"
+    if "chemicals" in d or "inorganic" in d:
+        return "Chemicals"
+    if "solar energy" in d or "renewable energy" in d:
+        return "Renewable Energy"
+    if "textile" in d or "knitwear" in d or "garment" in d or "fibre" in d:
+        return "Textiles"
+    if "logistics" in d:
+        return "Logistics"
+    if "farming" in d or "agrochemicals" in d or "agricultural" in d:
+        return "Agriculture"
+    if "jewellery" in d or "jewelry" in d or "fashion" in d or "luxury" in d:
+        return "Consumer Discretionary"
+    if "payment" in d or "fintech" in d:
+        return "Financial Technology"
+    if "asset reconstruction" in d or "financial services" in d or "banking" in d:
+        return "Financial Services"
+    if "rental" in d or "subscription" in d:
+        return "Consumer Technology"
+    if "gas generation" in d or "utilities" in d:
+        return "Utilities"
+    if "façade" in d or "facade" in d or "fenestration" in d:
+        return "Building Materials"
+    if "transformer" in d or "transmission" in d or "epc" in d or "infrastructure" in d:
+        return "Infrastructure"
+    if "travel" in d or "tourism" in d:
+        return "Travel & Tourism"
+    return None
+
+
 # ── Provider class ───────────────────────────────────────────────────
 
 class LiveIPOProvider(IPOProvider):
@@ -374,58 +416,61 @@ class LiveIPOProvider(IPOProvider):
             logger.warning("LiveIPOProvider: no tables found in HTML")
             return []
 
-        # Find the mainboard IPO table by its first column header
-        table = None
+        # Find the mainboard and SME IPO tables by their first column headers
+        target_tables = []
         for t in tables:
             header_row = t.find("tr")
             if header_row:
                 first_col = header_row.get_text(strip=True).lower()
                 if "upcoming ipo" in first_col or "upcoming mainboard" in first_col:
-                    table = t
-                    break
+                    target_tables.append((t, "Mainboard"))
+                elif "upcoming sme ipo" in first_col or "sme ipo" in first_col:
+                    target_tables.append((t, "SME"))
 
-        if table is None:
-            logger.warning("LiveIPOProvider: mainboard IPO table not found")
+        if not target_tables:
+            logger.warning("LiveIPOProvider: no valid IPO tables found")
             return []
 
-        rows = table.find_all("tr")[1:]  # skip header row
         results: list[dict] = []
 
-        for row in rows:
-            cells = row.find_all("td")
-            if len(cells) < 4:
-                continue
+        for table, segment in target_tables:
+            rows = table.find_all("tr")[1:]  # skip header row
+            for row in rows:
+                cells = row.find_all("td")
+                if len(cells) < 4:
+                    continue
 
-            name = cells[0].get_text(strip=True)
-            # Strip emoji and trailing whitespace from company names
-            name = re.sub(r"[\U0001f300-\U0001faff\U00002702-\U000027b0]+", "", name).strip()
+                name = cells[0].get_text(strip=True)
+                # Strip emoji and trailing whitespace from company names
+                name = re.sub(r"[\U0001f300-\U0001faff\U00002702-\U000027b0]+", "", name).strip()
 
-            # Skip navigation rows (e.g. "More Mainboard IPOs")
-            if not name or "more" in name.lower() and "ipo" in name.lower():
-                continue
+                # Skip navigation rows (e.g. "More Mainboard IPOs")
+                if not name or "more" in name.lower() and "ipo" in name.lower():
+                    continue
 
-            status = _extract_status(row)
+                status = _extract_status(row)
 
-            link_tag = cells[0].find("a")
-            detail_url = link_tag["href"] if link_tag else ""
-            dates = cells[1].get_text(strip=True)
-            price_low, price_high = _parse_price_band(cells[2].get_text(strip=True))
-            issue_size = _parse_issue_size(cells[3].get_text(strip=True))
+                link_tag = cells[0].find("a")
+                detail_url = link_tag["href"] if link_tag else ""
+                dates = cells[1].get_text(strip=True)
+                price_low, price_high = _parse_price_band(cells[2].get_text(strip=True))
+                issue_size = _parse_issue_size(cells[3].get_text(strip=True))
 
-            # Skip rows with no price and no size (not real IPO data)
-            if price_low == 0 and price_high == 0 and issue_size == 0:
-                continue
+                # Skip rows with no price and no size (not real IPO data)
+                if price_low == 0 and price_high == 0 and issue_size == 0:
+                    continue
 
-            results.append({
-                "name": name,
-                "slug": _slugify(name),
-                "status": status,
-                "detail_url": detail_url,
-                "dates": dates,
-                "price_low": price_low,
-                "price_high": price_high,
-                "issue_size_crore": issue_size,
-            })
+                results.append({
+                    "name": name,
+                    "slug": _slugify(name),
+                    "status": status,
+                    "detail_url": detail_url,
+                    "dates": dates,
+                    "price_low": price_low,
+                    "price_high": price_high,
+                    "issue_size_crore": issue_size,
+                    "listing_segment": segment,
+                })
 
         logger.info("LiveIPOProvider: parsed %d IPO rows from HTML", len(results))
         return results
@@ -438,6 +483,20 @@ class LiveIPOProvider(IPOProvider):
         """
         enrichment: dict = {}
         soup = BeautifulSoup(html, "html.parser")
+
+        # ── Extract description and sector from article paragraphs ────
+        entry = soup.find(class_=re.compile(r"entry-content|post-content|td-post-content")) or soup
+        for p_tag in entry.find_all("p"):
+            text = p_tag.get_text(strip=True)
+            if "IPO Description" in text or "incorporated in" in text.lower() or "engaged in" in text.lower():
+                cleaned_desc = re.sub(r"^.*?IPO Description\s*[–—-]?\s*", "", text, flags=re.IGNORECASE).strip()
+                if cleaned_desc:
+                    enrichment["description"] = cleaned_desc
+                    sec = _extract_sector_from_text(cleaned_desc)
+                    if sec:
+                        enrichment["sector"] = sec
+                break
+
         tables = soup.find_all("table")
 
         if not tables:
@@ -539,8 +598,10 @@ class LiveIPOProvider(IPOProvider):
             return NormalizedIPO(
                 name=raw["name"],
                 slug=raw["slug"],
-                sector=None,
+                sector=raw.get("sector"),
+                description=raw.get("description", ""),
                 status=raw["status"],
+                listing_segment=raw.get("listing_segment"),
                 issue_size_crore=raw["issue_size_crore"],
                 price_low=raw["price_low"],
                 price_high=raw["price_high"],

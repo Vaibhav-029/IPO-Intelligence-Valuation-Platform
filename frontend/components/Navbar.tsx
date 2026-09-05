@@ -2,48 +2,72 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../lib/AuthContext";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Search } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
   const { user, loading, logout, setAuthModalOpen } = useAuth();
 
   return (
-    <nav className="nav">
-      <Link className="brand" href="/">
-        <span className="brand-mark">I</span> IPO Intelligence
-      </Link>
-      <div className="navlinks">
-        <Link href="/" className={pathname === "/" ? "active" : ""}>Directory</Link>
-        <span className={pathname.startsWith("/ipos") ? "active" : ""}>Research workspace</span>
-        <span>Methodology v1.0</span>
-      </div>
-      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>
-        {!loading && (
-          user ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--ink)" }}>
-                <User size={14} color="var(--cyan)" />
-                {user.email}
-              </div>
-              <button 
-                onClick={logout} 
-                style={{ background: "transparent", border: "none", color: "var(--muted)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}
-              >
-                <LogOut size={14} /> Log out
-              </button>
+    <header className="navbar-wrapper">
+      <div className="navbar-inner">
+        <div className="nav-brand-group">
+          <Link className="brand-wordmark" href="/">
+            <span className="brand-text">IPO Intelligence</span>
+          </Link>
+          <nav className="navlinks">
+            <Link href="/" className={`navlink ${pathname === "/" ? "active" : ""}`}>
+              Market
+            </Link>
+            <Link href="/research" className={`navlink ${pathname.startsWith("/research") ? "active" : ""}`}>
+              Research
+            </Link>
+            <Link href="/watchlist" className={`navlink ${pathname.startsWith("/watchlist") ? "active" : ""}`}>
+              Watchlist
+            </Link>
+          </nav>
+        </div>
+
+        <div className="nav-actions">
+          <div className="search-bar">
+            <Search size={14} className="search-icon" />
+            <input 
+              type="text" 
+              className="search-input" 
+              placeholder="Search companies, sectors, DRHP..." 
+              readOnly 
+            />
+            <div className="kbd-shortcut">
+              <kbd>⌘</kbd>
+              <kbd>K</kbd>
             </div>
-          ) : (
-            <button 
-              className="button secondary" 
-              onClick={() => setAuthModalOpen(true)}
-              style={{ padding: "6px 14px", fontSize: 13 }}
-            >
-              Sign In
-            </button>
-          )
-        )}
+          </div>
+
+          <div className="nav-divider" />
+
+          {!loading && (
+            user ? (
+              <div className="user-profile">
+                <div className="user-info">
+                  <User size={13} className="user-icon" />
+                  <span className="user-email">{user.email}</span>
+                </div>
+                <button onClick={logout} className="logout-btn" title="Log out">
+                  <LogOut size={13} />
+                  <span>Log out</span>
+                </button>
+              </div>
+            ) : (
+              <button 
+                className="btn-signin" 
+                onClick={() => setAuthModalOpen(true)}
+              >
+                Sign In
+              </button>
+            )
+          )}
+        </div>
       </div>
-    </nav>
+    </header>
   );
 }

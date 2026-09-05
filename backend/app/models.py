@@ -35,6 +35,7 @@ class IPO(Timestamped, Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
     status: Mapped[str] = mapped_column(String(30), default="Upcoming", index=True)
+    listing_segment: Mapped[Optional[str]] = mapped_column(String(30), nullable=True, index=True)
     issue_size: Mapped[float] = mapped_column(Numeric(16, 2), default=0)
     price_low: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
     price_high: Mapped[float] = mapped_column(Numeric(12, 2), default=0)

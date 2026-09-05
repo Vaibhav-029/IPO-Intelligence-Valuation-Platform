@@ -32,30 +32,39 @@ def _fresh_db():
 # ── 1. IPO lifecycle distribution ─────────────────────────────────────
 
 def test_seed_creates_all_lifecycle_statuses():
-    """After seeding, the DB should contain Upcoming, Open, Closed, and Listed IPOs."""
+    """After seeding, the DB should contain Listed IPOs.
+    
+    Since lifecycle status is now dynamically computed from dates,
+    and all 28 seed companies have listing_date in the past,
+    all seed IPOs should be Listed.
+    """
     db = _fresh_db()
     statuses = db.scalars(select(IPO.status)).all()
     counts = Counter(statuses)
 
     assert counts["Listed"] > 0, "No Listed IPOs found"
-    assert counts["Upcoming"] > 0, "No Upcoming IPOs found"
-    assert counts["Ongoing"] > 0, "No Ongoing IPOs found"
-    assert counts["Closed"] > 0, "No Closed IPOs found"
+    # All seed IPOs have listing dates in the past (historical data)
+    assert counts["Listed"] == 28, f"Expected all 28 seed IPOs to be Listed, got {counts}"
     assert sum(counts.values()) == 28, f"Expected 28 total IPOs, got {sum(counts.values())}"
 
     db.close()
 
 
 def test_seed_counts_match_expected():
-    """Verify exact counts match our seed data."""
+    """Verify exact counts match our seed data.
+    
+    All 28 seed companies have past listing dates, so all are Listed.
+    Lifecycle status is computed from dates, not from static JSON.
+    """
     db = _fresh_db()
     statuses = db.scalars(select(IPO.status)).all()
     counts = Counter(statuses)
 
-    assert counts["Listed"] == 21
-    assert counts["Upcoming"] == 3
-    assert counts["Ongoing"] == 2
-    assert counts["Closed"] == 2
+    # All historical seed IPOs should be Listed
+    assert counts["Listed"] == 28
+    assert counts.get("Upcoming", 0) == 0
+    assert counts.get("Ongoing", 0) == 0
+    assert counts.get("Closed", 0) == 0
 
     db.close()
 
@@ -78,40 +87,37 @@ def test_seed_sets_provenance_fields():
 # ── 3. Status filtering ──────────────────────────────────────────────
 
 def test_status_filtering_upcoming():
-    """Filtering by 'Upcoming' should return only Upcoming IPOs."""
+    """Filtering by 'Upcoming' should return zero for all-historical seed data."""
     db = _fresh_db()
     upcoming = db.scalars(select(IPO).where(IPO.status == "Upcoming")).all()
-    assert len(upcoming) == 3
-    for ipo in upcoming:
-        assert ipo.status == "Upcoming"
+    # All seed IPOs have listing dates in the past, so none are Upcoming
+    assert len(upcoming) == 0
     db.close()
 
 
 def test_status_filtering_ongoing():
-    """Filtering by 'Ongoing' should return only Ongoing IPOs."""
+    """Filtering by 'Ongoing' should return zero for all-historical seed data."""
     db = _fresh_db()
     ongoing_ipos = db.scalars(select(IPO).where(IPO.status == "Ongoing")).all()
-    assert len(ongoing_ipos) == 2
-    for ipo in ongoing_ipos:
-        assert ipo.status == "Ongoing"
+    # All seed IPOs have listing dates in the past, so none are Ongoing
+    assert len(ongoing_ipos) == 0
     db.close()
 
 
 def test_status_filtering_closed():
-    """Filtering by 'Closed' should return only Closed IPOs."""
+    """Filtering by 'Closed' should return zero for all-historical seed data."""
     db = _fresh_db()
     closed = db.scalars(select(IPO).where(IPO.status == "Closed")).all()
-    assert len(closed) == 2
-    for ipo in closed:
-        assert ipo.status == "Closed"
+    # All seed IPOs have listing dates in the past, so none are Closed
+    assert len(closed) == 0
     db.close()
 
 
 def test_status_filtering_listed():
-    """Filtering by 'Listed' should return only Listed IPOs."""
+    """Filtering by 'Listed' should return all 28 historical seed IPOs."""
     db = _fresh_db()
     listed = db.scalars(select(IPO).where(IPO.status == "Listed")).all()
-    assert len(listed) == 21
+    assert len(listed) == 28
     for ipo in listed:
         assert ipo.status == "Listed"
     db.close()

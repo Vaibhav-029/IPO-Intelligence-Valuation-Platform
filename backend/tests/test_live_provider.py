@@ -483,3 +483,27 @@ class TestBatchResilience:
 
         assert len(results) == 1
         assert results[0].name == "Good IPO"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 11. Sector extraction from description
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestExtractSector:
+    def test_extract_real_estate(self):
+        from app.providers.live import _extract_sector_from_text
+        assert _extract_sector_from_text("Kerala-focused residential real estate developer engaged in planning...") == "Real Estate"
+
+    def test_extract_specialty_chemicals(self):
+        from app.providers.live import _extract_sector_from_text
+        assert _extract_sector_from_text("A leading specialty chemicals manufacturer...") == "Specialty Chemicals"
+
+    def test_extract_renewable_energy(self):
+        from app.providers.live import _extract_sector_from_text
+        assert _extract_sector_from_text("Manufacturer of solar energy and power transmission...") == "Renewable Energy"
+
+    def test_unknown_returns_none(self):
+        from app.providers.live import _extract_sector_from_text
+        assert _extract_sector_from_text("A social enterprise providing community benefits...") is None
+        assert _extract_sector_from_text("") is None
+        assert _extract_sector_from_text(None) is None

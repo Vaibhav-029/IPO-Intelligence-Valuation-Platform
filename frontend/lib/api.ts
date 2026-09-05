@@ -11,7 +11,9 @@ export type IPO = {
   price_band:[number,number]; 
   issue_date?:string; 
   score?:number; 
-  description?:string 
+  description?:string;
+  listing_segment?:string | null;
+  logo_url?:string | null;
 };
 
 // Global token storage for the frontend
@@ -25,8 +27,9 @@ export function getAccessToken() {
   return currentAccessToken;
 }
 
-export async function getIPOs(): Promise<IPO[]> {
-  const response = await fetch(`${apiUrl}/ipos`, { cache: "no-store" });
+export async function getIPOs(statusFilter?: string): Promise<IPO[]> {
+  const url = statusFilter ? `${apiUrl}/ipos?status_filter=${encodeURIComponent(statusFilter)}` : `${apiUrl}/ipos`;
+  const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) throw new Error("API unavailable");
   return (await response.json()).items;
 }

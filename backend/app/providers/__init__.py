@@ -38,6 +38,7 @@ class NormalizedIPO(BaseModel):
     exchange: str = Field(default="NSE / BSE", max_length=30)
     description: str = Field(default="")
     status: str = Field(default="Upcoming")
+    listing_segment: Optional[str] = None
     issue_size_crore: float = Field(ge=0)
     price_low: float = Field(ge=0)
     price_high: float = Field(ge=0)
@@ -128,10 +129,13 @@ class SeedFileProvider(IPOProvider):
                     exchange=entry.get("exchange", "NSE / BSE"),
                     description=entry.get("description", ""),
                     status=ipo_data.get("status", "Upcoming"),
+                    listing_segment=ipo_data.get("listing_segment"),
                     issue_size_crore=ipo_data.get("issue_size_crore", 0),
                     price_low=ipo_data.get("price_low", 0),
                     price_high=ipo_data.get("price_high", 0),
                     issue_date=ipo_data.get("issue_date"),
+                    open_date=ipo_data.get("open_date"),
+                    close_date=ipo_data.get("close_date"),
                     listing_date=ipo_data.get("listing_date"),
                     fresh_issue_crore=ipo_data.get("fresh_issue_crore", 0),
                     ofs_crore=ipo_data.get("ofs_crore", 0),

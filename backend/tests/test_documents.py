@@ -185,6 +185,7 @@ def test_access_control(client: TestClient, db_session: Session):
     # 404 nonexistent
     res = client.get(f"/api/v1/documents/999/status")
     assert res.status_code == 404
+    client.app.dependency_overrides.pop(get_current_user, None)
 
 
 def test_deduplication(client: TestClient, db_session: Session, tmp_path, monkeypatch):
@@ -220,3 +221,4 @@ def test_deduplication(client: TestClient, db_session: Session, tmp_path, monkey
     res = client.post("/api/v1/documents", files={"file": ("test.pdf", content, "application/pdf")})
     assert res.status_code == 202
     assert res.json()["deduplicated"] is False
+    client.app.dependency_overrides.pop(get_current_user, None)

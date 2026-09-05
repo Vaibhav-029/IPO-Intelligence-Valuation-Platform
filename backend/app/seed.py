@@ -146,18 +146,34 @@ def seed_demo_data(db: Session) -> None:
 
         # ── 2. Create the IPO record ──────────────────────────────────
         ipo_data = entry["ipo"]
+        from datetime import date as date_type
+        from app.lifecycle import compute_lifecycle_status, parse_date_safe
+        
+        issue_d = _parse_date(ipo_data["issue_date"]) if ipo_data.get("issue_date") else None
+        listing_d = _parse_date(ipo_data["listing_date"]) if ipo_data.get("listing_date") else None
+        open_d = _parse_date(ipo_data["open_date"]) if ipo_data.get("open_date") else None
+        close_d = _parse_date(ipo_data["close_date"]) if ipo_data.get("close_date") else None
+        
+        # CRITICAL: Compute lifecycle status from dates, NEVER trust static JSON
+        computed_status = compute_lifecycle_status(
+            open_date=open_d,
+            close_date=close_d,
+            listing_date=listing_d,
+            issue_date=issue_d,
+            static_status=ipo_data.get("status"),
+        )
+        
         ipo = IPO(
             company_id=company.id,
-            status=ipo_data["status"],
+            status=computed_status,
+            listing_segment=ipo_data.get("listing_segment"),
             issue_size=ipo_data["issue_size_crore"],
             price_low=ipo_data["price_low"],
             price_high=ipo_data["price_high"],
-            issue_date=_parse_date(ipo_data["issue_date"]),
-            listing_date=(
-                _parse_date(ipo_data["listing_date"])
-                if ipo_data.get("listing_date")
-                else None
-            ),
+            issue_date=issue_d,
+            open_date=open_d,
+            close_date=close_d,
+            listing_date=listing_d,
             fresh_issue=ipo_data.get("fresh_issue_crore", 0),
             ofs=ipo_data.get("ofs_crore", 0),
             data_source="seed",

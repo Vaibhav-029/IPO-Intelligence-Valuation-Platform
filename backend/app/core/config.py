@@ -12,13 +12,15 @@ class Settings(BaseSettings):
     jwt_secret: str = "local-development-secret-change-me"
     jwt_access_minutes: int = 30
     jwt_refresh_days: int = 14
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:3002"
     llm_provider: str = "groq"
     llm_model: str = "llama-3.3-70b-versatile"
     groq_api_key: str = ""
     environment: str = "development"
     upload_dir: str = "./data/uploads"
     task_eager: bool = True
+    recently_closed_days: int = 30
+    recently_listed_days: int = 30
 
     def model_post_init(self, __context) -> None:
         if self.environment == "production" and self.jwt_secret == "local-development-secret-change-me":

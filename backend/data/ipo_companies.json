@@ -20,6 +20,7 @@
       "exchange": "NSE / BSE",
       "description": "Tata Technologies is a global engineering and product development digital services company. A subsidiary of Tata Motors, it provides services to automotive and aerospace OEMs worldwide, specializing in product engineering, manufacturing engineering, and digital transformation solutions. The IPO was a pure Offer for Sale (OFS) with no fresh capital raised by the company.",
       "ipo": {
+        "listing_segment": "Mainboard",
         "status": "Listed",
         "issue_size_crore": 3042.51,
         "price_low": 475,
@@ -106,6 +107,7 @@
       "exchange": "NSE / BSE",
       "description": "Bajaj Housing Finance is a wholly-owned subsidiary of Bajaj Finance Limited and one of India's largest non-deposit-taking housing finance companies by AUM. It offers home loans, loans against property, lease rental discounting, and developer financing. It holds the highest AAA/Stable credit rating from CRISIL and ICRA.",
       "ipo": {
+        "listing_segment": "Mainboard",
         "status": "Listed",
         "issue_size_crore": 6560,
         "price_low": 66,
@@ -192,6 +194,7 @@
       "exchange": "NSE / BSE",
       "description": "Swiggy is one of India's leading food delivery and quick commerce platforms. It operates Swiggy Food Delivery, Instamart (quick commerce), Swiggy Dineout (dining out), and Swiggy Genie (package delivery). The company is loss-making but has shown consistent revenue growth and narrowing losses over time. It competes primarily with Zomato in the Indian market.",
       "ipo": {
+        "listing_segment": "Mainboard",
         "status": "Listed",
         "issue_size_crore": 11327.43,
         "price_low": 371,
@@ -285,7 +288,8 @@
         "issue_date": "2024-10-21",
         "listing_date": "2024-10-28",
         "fresh_issue_crore": 3600,
-        "ofs_crore": 721.44
+        "ofs_crore": 721.44,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -371,7 +375,8 @@
         "issue_date": "2024-08-02",
         "listing_date": "2024-08-09",
         "fresh_issue_crore": 5500,
-        "ofs_crore": 645.56
+        "ofs_crore": 645.56,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -457,7 +462,8 @@
         "issue_date": "2023-11-21",
         "listing_date": "2023-11-29",
         "fresh_issue_crore": 2150.21,
-        "ofs_crore": 0
+        "ofs_crore": 0,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -543,7 +549,8 @@
         "issue_date": "2024-10-15",
         "listing_date": "2024-10-22",
         "fresh_issue_crore": 0,
-        "ofs_crore": 27870.16
+        "ofs_crore": 27870.16,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -629,7 +636,8 @@
         "issue_date": "2024-08-06",
         "listing_date": "2024-08-13",
         "fresh_issue_crore": 1666,
-        "ofs_crore": 2527.73
+        "ofs_crore": 2527.73,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -715,7 +723,8 @@
         "issue_date": "2024-08-27",
         "listing_date": "2024-09-03",
         "fresh_issue_crore": 1291.4,
-        "ofs_crore": 1539.0
+        "ofs_crore": 1539.0,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -801,7 +810,8 @@
         "issue_date": "2024-11-05",
         "listing_date": "2024-11-12",
         "fresh_issue_crore": 0,
-        "ofs_crore": 2106.6
+        "ofs_crore": 2106.6,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -887,7 +897,8 @@
         "issue_date": "2024-10-25",
         "listing_date": "2024-11-04",
         "fresh_issue_crore": 1250,
-        "ofs_crore": 4180
+        "ofs_crore": 4180,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -973,7 +984,8 @@
         "issue_date": "2024-12-11",
         "listing_date": "2024-12-18",
         "fresh_issue_crore": 0,
-        "ofs_crore": 8000
+        "ofs_crore": 8000,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -1059,7 +1071,8 @@
         "issue_date": "2024-08-06",
         "listing_date": "2024-08-13",
         "fresh_issue_crore": 0,
-        "ofs_crore": 276.57
+        "ofs_crore": 276.57,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -1145,7 +1158,8 @@
         "issue_date": "2024-05-15",
         "listing_date": "2024-05-23",
         "fresh_issue_crore": 1125,
-        "ofs_crore": 1489.65
+        "ofs_crore": 1489.65,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -1231,7 +1245,8 @@
         "issue_date": "2024-05-22",
         "listing_date": "2024-05-30",
         "fresh_issue_crore": 128,
-        "ofs_crore": 470.93
+        "ofs_crore": 470.93,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -1317,7 +1332,8 @@
         "issue_date": "2024-05-08",
         "listing_date": "2024-05-15",
         "fresh_issue_crore": 400,
-        "ofs_crore": 1150.81
+        "ofs_crore": 1150.81,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -1403,7 +1419,8 @@
         "issue_date": "2024-12-11",
         "listing_date": "2024-12-18",
         "fresh_issue_crore": 572,
-        "ofs_crore": 0
+        "ofs_crore": 0,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -1489,7 +1506,8 @@
         "issue_date": "2024-02-27",
         "listing_date": "2024-03-05",
         "fresh_issue_crore": 329,
-        "ofs_crore": 100
+        "ofs_crore": 100,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -1575,7 +1593,8 @@
         "issue_date": "2025-04-28",
         "listing_date": "2025-05-06",
         "fresh_issue_crore": 2626,
-        "ofs_crore": 354.76
+        "ofs_crore": 354.76,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -1661,7 +1680,8 @@
         "issue_date": "2024-11-06",
         "listing_date": "2024-11-13",
         "fresh_issue_crore": 2395,
-        "ofs_crore": 505
+        "ofs_crore": 505,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -1747,7 +1767,8 @@
         "issue_date": "2023-09-14",
         "listing_date": "2023-09-28",
         "fresh_issue_crore": 392,
-        "ofs_crore": 171.38
+        "ofs_crore": 171.38,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -1826,13 +1847,17 @@
       "exchange": "NSE / BSE",
       "description": "HDB Financial Services is a subsidiary of HDFC Bank, offering lending products including consumer loans, enterprise loans, and asset finance. RBI mandated HDFC Bank to list HDB by September 2025. The DRHP was filed in late 2024.",
       "ipo": {
-        "status": "Upcoming",
+        "status": "Listed",
         "issue_size_crore": 12500,
         "price_low": 0,
         "price_high": 0,
-        "issue_date": "2025-09-15",
+        "issue_date": "2025-06-25",
+        "open_date": "2025-06-25",
+        "close_date": "2025-06-27",
+        "listing_date": "2025-07-02",
         "fresh_issue_crore": 2500,
-        "ofs_crore": 10000
+        "ofs_crore": 10000,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -1887,13 +1912,17 @@
       "exchange": "NSE / BSE",
       "description": "LG Electronics India is the Indian subsidiary of South Korea's LG Electronics. It manufactures and sells consumer electronics including televisions, washing machines, refrigerators, and air conditioners. DRHP filed with SEBI in early 2025 for a pure OFS IPO.",
       "ipo": {
-        "status": "Upcoming",
+        "status": "Listed",
         "issue_size_crore": 15000,
-        "price_low": 0,
-        "price_high": 0,
-        "issue_date": "2025-10-01",
+        "price_low": 1080,
+        "price_high": 1140,
+        "issue_date": "2025-10-07",
+        "open_date": "2025-10-07",
+        "close_date": "2025-10-09",
+        "listing_date": "2025-10-14",
         "fresh_issue_crore": 0,
-        "ofs_crore": 15000
+        "ofs_crore": 15000,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -1948,13 +1977,17 @@
       "exchange": "NSE / BSE",
       "description": "Hexaware Technologies is a global IT services and BPS company. It was delisted from Indian exchanges in 2020 and is now seeking re-listing via a fresh IPO. Carlyle Group is the promoter. Services span application modernization, cloud, data, and AI.",
       "ipo": {
-        "status": "Upcoming",
-        "issue_size_crore": 9950,
-        "price_low": 0,
-        "price_high": 0,
-        "issue_date": "2025-08-25",
+        "status": "Listed",
+        "issue_size_crore": 8750,
+        "price_low": 674,
+        "price_high": 708,
+        "issue_date": "2025-02-12",
+        "open_date": "2025-02-12",
+        "close_date": "2025-02-14",
+        "listing_date": "2025-02-19",
         "fresh_issue_crore": 0,
-        "ofs_crore": 9950
+        "ofs_crore": 8750,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -2009,13 +2042,17 @@
       "exchange": "NSE / BSE",
       "description": "Ventive Hospitality is a luxury hospitality company operating premium hotels under brands like JW Marriott, Conrad, and Hilton in India and the Maldives. It is the hospitality arm of the Panchshil Group.",
       "ipo": {
-        "status": "Ongoing",
+        "status": "Listed",
         "issue_size_crore": 1600,
         "price_low": 610,
         "price_high": 643,
-        "issue_date": "2025-08-27",
+        "issue_date": "2024-12-20",
+        "open_date": "2024-12-20",
+        "close_date": "2024-12-24",
+        "listing_date": "2024-12-30",
         "fresh_issue_crore": 1600,
-        "ofs_crore": 0
+        "ofs_crore": 0,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -2070,13 +2107,17 @@
       "exchange": "NSE / BSE",
       "description": "Stallion India Fluorochemicals is a specialty chemicals company focused on refrigerant gases and related fluorochemicals. It caters to the HVAC-R, automotive, and industrial sectors across India and exports.",
       "ipo": {
-        "status": "Ongoing",
+        "status": "Listed",
         "issue_size_crore": 501,
         "price_low": 85,
         "price_high": 90,
-        "issue_date": "2025-08-28",
+        "issue_date": "2025-01-16",
+        "open_date": "2025-01-16",
+        "close_date": "2025-01-20",
+        "listing_date": "2025-01-23",
         "fresh_issue_crore": 200,
-        "ofs_crore": 301
+        "ofs_crore": 301,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -2131,13 +2172,17 @@
       "exchange": "NSE / BSE",
       "description": "Arkade Developers is a Mumbai-based real estate company focused on residential redevelopment projects in the western suburbs of Mumbai. The company specializes in slum rehabilitation and old building redevelopment under MHADA and SRA schemes.",
       "ipo": {
-        "status": "Closed",
+        "status": "Listed",
         "issue_size_crore": 410,
         "price_low": 121,
         "price_high": 128,
-        "issue_date": "2025-08-20",
+        "issue_date": "2024-09-19",
+        "open_date": "2024-09-19",
+        "close_date": "2024-09-23",
+        "listing_date": "2024-09-24",
         "fresh_issue_crore": 410,
-        "ofs_crore": 0
+        "ofs_crore": 0,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {
@@ -2192,13 +2237,17 @@
       "exchange": "NSE / BSE",
       "description": "Saraswati Saree Depot is one of India's largest ethnic wear retailers, specializing in sarees and other traditional Indian garments. The company operates through a chain of retail stores primarily in Maharashtra and Gujarat.",
       "ipo": {
-        "status": "Closed",
+        "status": "Listed",
         "issue_size_crore": 160,
         "price_low": 152,
         "price_high": 160,
-        "issue_date": "2025-08-22",
+        "issue_date": "2024-08-12",
+        "open_date": "2024-08-12",
+        "close_date": "2024-08-14",
+        "listing_date": "2024-08-20",
         "fresh_issue_crore": 80,
-        "ofs_crore": 80
+        "ofs_crore": 80,
+        "listing_segment": "Mainboard"
       },
       "financials": [
         {

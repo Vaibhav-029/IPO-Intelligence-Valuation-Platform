@@ -105,6 +105,7 @@ def as_float(value):
 def ipo_payload(ipo: IPO, score: IPOSCore | None = None) -> dict:
     sector = ipo.company.sector if ipo.company.sector and ipo.company.sector != "Unknown" else None
     logo_url = getattr(ipo.company, "logo_url", None) or getattr(ipo, "logo_url", None)
+    effective_open = ipo.open_date or ipo.issue_date
     return {
         "id": ipo.id,
         "company_id": ipo.company_id,
@@ -116,8 +117,12 @@ def ipo_payload(ipo: IPO, score: IPOSCore | None = None) -> dict:
         "listing_segment": ipo.listing_segment,
         "issue_size_crore": as_float(ipo.issue_size),
         "price_band": [as_float(ipo.price_low), as_float(ipo.price_high)],
+        "lot_size": ipo.lot_size,
+        "min_investment": as_float(ipo.min_investment),
+        "face_value": as_float(ipo.face_value),
+        "shares_offered": ipo.shares_offered,
         "issue_date": str(ipo.issue_date) if ipo.issue_date else None,
-        "open_date": str(ipo.open_date) if ipo.open_date else None,
+        "open_date": str(effective_open) if effective_open else None,
         "close_date": str(ipo.close_date) if ipo.close_date else None,
         "listing_date": str(ipo.listing_date) if ipo.listing_date else None,
         "data_source": ipo.data_source,
@@ -404,18 +409,25 @@ def peers(ipo_id: int, db: Session = Depends(get_db)):
     ipo_at_issue = val_data.get("IPO_AT_ISSUE", {})
     lower_band = ipo_at_issue.get("lower_band", {})
     upper_band = ipo_at_issue.get("upper_band", {})
+    current_market = val_data.get("CURRENT_MARKET")
     
     target = {
         "name": ipo.company.name,
         "sector": ipo.company.sector,
-        "context": "IPO_AT_ISSUE",
+        "context": "CURRENT_MARKET" if current_market and ipo.status == "Listed" else "IPO_AT_ISSUE",
+        "current_market": current_market,
         "lower_band": lower_band,
         "upper_band": upper_band
     }
     
-    from app.analytics.financials import calculate_peer_statistics, calculate_band_comparison
+    from app.analytics.financials import calculate_peer_statistics, calculate_band_comparison, premium_discount
     peer_stats = calculate_peer_statistics(detailed_peers)
     comparison = calculate_band_comparison(lower_band, upper_band, peer_stats)
+    if current_market:
+        comparison["current_market"] = {
+            k: premium_discount(current_market.get(k), peer_stats.get(k, {}).get("median"))
+            for k in ["pe", "ps", "ev_ebitda", "ev_sales"]
+        }
             
     return {
         "target": target,
@@ -449,6 +461,184 @@ def score(ipo_id: int, db: Session = Depends(get_db)):
 @app.get("/api/v1/ipos/{ipo_id}/risks")
 def risks(ipo_id: int, db: Session = Depends(get_db)):
     return [{"id": item.id, "category": item.category, "severity": item.severity, "summary": item.summary, "source_page": item.source_page} for item in db.scalars(select(RiskFactor).where(RiskFactor.ipo_id == ipo_id)).all()]
+
+
+@app.post("/api/v1/ipos/{ipo_id}/enrich", status_code=200)
+def enrich_ipo(ipo_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Enrich an IPO with financial data and risk factors extracted from its filing documents.
+
+    Pipeline: find Document → financial extraction → risk extraction → score regeneration.
+    Requires at least one completed Document linked to the IPO's company.
+    """
+    ipo = db.scalar(select(IPO).options(joinedload(IPO.company)).where(IPO.id == ipo_id))
+    if not ipo:
+        raise HTTPException(404, "IPO not found")
+
+    # Find a completed document for this company/IPO
+    document = db.scalar(
+        select(Document).where(
+            ((Document.company_id == ipo.company_id) | (Document.ipo_id == ipo_id)),
+            Document.processing_status == "completed",
+        ).order_by(Document.id.desc())
+    )
+    if not document:
+        return {
+            "status": "no_document",
+            "message": "No processed filing document found for this IPO. Upload a DRHP/RHP first.",
+            "financial_extraction": None,
+            "risk_extraction": None,
+            "score_regenerated": False,
+        }
+
+    from app.services.financial_extractor import extract_financials
+    from app.services.risk_extractor import extract_risks
+
+    # 1. Financial extraction
+    fin_result = extract_financials(db, document.id, ipo.company_id)
+
+    # 2. Risk extraction
+    risk_result = extract_risks(db, document.id, ipo.id)
+
+    # 3. Score regeneration (only if we have some extracted data)
+    score_regenerated = False
+    score_result = None
+    has_financials = fin_result.periods_extracted > 0 or fin_result.periods_updated > 0
+    has_risks = risk_result.risks_extracted > 0
+
+    if has_financials or has_risks:
+        try:
+            from app.analytics.scoring import generate_ipo_score
+            score_obj = generate_ipo_score(db, ipo_id)
+            db.commit()
+            score_regenerated = True
+            score_result = {
+                "overall_score": score_obj.overall_score,
+                "methodology_version": score_obj.methodology_version,
+                "dimensions_available": sum(1 for d in [
+                    score_obj.financial_quality_score,
+                    score_obj.growth_score,
+                    score_obj.valuation_score,
+                    score_obj.balance_sheet_score,
+                    score_obj.business_quality_score,
+                    score_obj.risk_score,
+                ] if d is not None),
+            }
+        except Exception as exc:
+            logger.warning("Score regeneration failed for IPO %d: %s", ipo_id, exc)
+            db.rollback()
+    else:
+        db.commit()
+
+    return {
+        "status": "completed",
+        "financial_extraction": fin_result.to_dict(),
+        "risk_extraction": risk_result.to_dict(),
+        "score_regenerated": score_regenerated,
+        "score": score_result,
+    }
+
+
+@app.get("/api/v1/ipos/{ipo_id}/coverage")
+def coverage(ipo_id: int, db: Session = Depends(get_db)):
+    """Return the data coverage state for an IPO.
+
+    Coverage tiers:
+    - computable: at least 1 score dimension is non-NULL
+    - reasonable: 3+ dimensions
+    - good: 4+ dimensions
+    - full: 6 dimensions
+    """
+    ipo = db.scalar(select(IPO).where(IPO.id == ipo_id))
+    if not ipo:
+        raise HTTPException(404, "IPO not found")
+
+    # Filing available
+    filing_available = db.scalar(
+        select(Document.id).where(
+            ((Document.company_id == ipo.company_id) | (Document.ipo_id == ipo_id)),
+            Document.processing_status == "completed",
+        )
+    ) is not None
+
+    # Financials extracted
+    financials_extracted = db.scalar(
+        select(FinancialMetric.id)
+        .join(FinancialPeriod)
+        .where(FinancialPeriod.company_id == ipo.company_id)
+    ) is not None
+
+    # Count financial periods
+    from sqlalchemy import func
+    financial_period_count = db.scalar(
+        select(func.count(FinancialPeriod.id))
+        .where(FinancialPeriod.company_id == ipo.company_id)
+    ) or 0
+
+    # Risks extracted
+    risks_extracted = db.scalar(
+        select(RiskFactor.id).where(RiskFactor.ipo_id == ipo_id)
+    ) is not None
+
+    risk_count = db.scalar(
+        select(func.count(RiskFactor.id)).where(RiskFactor.ipo_id == ipo_id)
+    ) or 0
+
+    # Valuation ready (needs post_issue_shares + financials)
+    valuation_ready = (
+        ipo.post_issue_shares is not None
+        and financials_extracted
+    )
+
+    # Score state
+    score_obj = db.scalar(select(IPOSCore).where(IPOSCore.ipo_id == ipo_id))
+    score_ready = score_obj is not None and score_obj.overall_score is not None
+
+    # Score readiness tier
+    dimensions_available = 0
+    readiness_tier = "no_score"
+    if score_obj:
+        dims = [
+            score_obj.financial_quality_score,
+            score_obj.growth_score,
+            score_obj.valuation_score,
+            score_obj.balance_sheet_score,
+            score_obj.business_quality_score,
+            score_obj.risk_score,
+        ]
+        dimensions_available = sum(1 for d in dims if d is not None)
+
+        if dimensions_available >= 6:
+            readiness_tier = "full"
+        elif dimensions_available >= 4:
+            readiness_tier = "good"
+        elif dimensions_available >= 3:
+            readiness_tier = "reasonable"
+        elif dimensions_available >= 1:
+            readiness_tier = "computable"
+        else:
+            readiness_tier = "no_score"
+
+    fully_covered = (
+        filing_available
+        and financials_extracted
+        and risks_extracted
+        and score_ready
+        and dimensions_available >= 4
+    )
+
+    return {
+        "ipo_id": ipo_id,
+        "filing_available": filing_available,
+        "financials_extracted": financials_extracted,
+        "financial_period_count": financial_period_count,
+        "risks_extracted": risks_extracted,
+        "risk_count": risk_count,
+        "valuation_ready": valuation_ready,
+        "score_ready": score_ready,
+        "score_readiness_tier": readiness_tier,
+        "dimensions_available": dimensions_available,
+        "fully_covered": fully_covered,
+    }
 
 
 @app.post("/api/v1/documents", status_code=202)
@@ -666,6 +856,8 @@ def dcf(ipo_id: int, scenario: DCFInput, db: Session = Depends(get_db)):
             "enterprise_value": ev,
             "equity_value": equity_value,
             "intrinsic_value_per_share": intrinsic_value_per_share,
+            "terminal_value": res.get("terminal_value"),
+            "terminal_value_pv": res.get("terminal_value_pv"),
             "implied_upside_pct_lower_band": upside_lower,
             "implied_upside_pct_upper_band": upside_upper
         },

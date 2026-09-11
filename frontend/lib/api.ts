@@ -244,3 +244,36 @@ export async function removeFromWatchlist(itemIdOrIpoId: number): Promise<void> 
   });
 }
 
+export interface SearchResultItem {
+  id: number;
+  company_id: number;
+  name: string;
+  slug: string;
+  sector: string;
+  status: string;
+  listing_segment: string;
+  exchange: string;
+  score?: number | null;
+  price_band?: [number, number];
+  issue_size_crore?: number | null;
+  logo_url?: string | null;
+  filing_type?: string | null;
+  has_filing?: boolean;
+}
+
+export interface SearchResponse {
+  items: SearchResultItem[];
+  total: number;
+  query: string;
+}
+
+export async function searchGlobal(q: string, limit = 8): Promise<SearchResponse> {
+  const cleanQ = q.trim();
+  if (!cleanQ) return { items: [], total: 0, query: "" };
+  const res = await fetch(`${apiUrl}/search?q=${encodeURIComponent(cleanQ)}&limit=${limit}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Search failed");
+  return res.json();
+}
+

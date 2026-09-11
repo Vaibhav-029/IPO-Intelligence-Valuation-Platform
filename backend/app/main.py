@@ -17,7 +17,7 @@ from alembic.runtime.migration import MigrationContext
 import os
 
 logger = logging.getLogger("api")
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, or_, case, func
 from sqlalchemy.orm import Session, joinedload
 from app.analytics.financials import enterprise_value, margin, revenue_cagr
 from app.core.config import get_settings
@@ -244,6 +244,88 @@ def ipos_summary(db: Session = Depends(get_db)):
         "listed": counts.get("Listed", 0),
         "total": sum(counts.values()),
     }
+
+
+@app.get("/api/v1/search")
+def search_global(q: str = "", limit: int = 8, db: Session = Depends(get_db)):
+    """Global search across Company, IPO, and filing metadata."""
+    clean_q = q.strip()
+    if not clean_q:
+        return {"items": [], "total": 0, "query": clean_q}
+    
+    clean_q = clean_q[:100]
+    bounded_limit = max(1, min(limit, 20))
+    
+    doc_subq = select(Document.ipo_id).where(
+        (Document.ipo_id.isnot(None)) & 
+        (
+            (Document.filename.ilike(f"%{clean_q}%")) | 
+            (Document.type.ilike(f"%{clean_q}%"))
+        )
+    )
+    
+    condition = or_(
+        Company.name.ilike(f"%{clean_q}%"),
+        Company.slug.ilike(f"%{clean_q}%"),
+        Company.sector.ilike(f"%{clean_q}%"),
+        Company.exchange.ilike(f"%{clean_q}%"),
+        IPO.status.ilike(f"%{clean_q}%"),
+        IPO.listing_segment.ilike(f"%{clean_q}%"),
+        IPO.id.in_(doc_subq)
+    )
+    
+    ranking = case(
+        (func.lower(Company.name) == clean_q.lower(), 1),
+        (func.lower(Company.name).startswith(clean_q.lower()), 2),
+        (func.lower(Company.slug).startswith(clean_q.lower()), 3),
+        (Company.name.ilike(f"%{clean_q}%"), 4),
+        (Company.sector.ilike(f"%{clean_q}%"), 5),
+        else_=6
+    )
+    
+    statement = (
+        select(IPO)
+        .join(Company)
+        .options(joinedload(IPO.company))
+        .where(condition)
+        .order_by(ranking, IPO.issue_date.desc().nullslast(), IPO.id.desc())
+        .limit(bounded_limit)
+    )
+    
+    records = db.scalars(statement).unique().all()
+    if not records:
+        return {"items": [], "total": 0, "query": clean_q}
+        
+    ipo_ids = [r.id for r in records]
+    scores = {s.ipo_id: s for s in db.scalars(select(IPOSCore).where(IPOSCore.ipo_id.in_(ipo_ids))).all()}
+    doc_rows = db.scalars(select(Document).where(Document.ipo_id.in_(ipo_ids))).all()
+    ipo_docs = {}
+    for d in doc_rows:
+        if d.ipo_id and d.ipo_id not in ipo_docs:
+            ipo_docs[d.ipo_id] = d
+            
+    items = []
+    for ipo in records:
+        sc = scores.get(ipo.id)
+        doc = ipo_docs.get(ipo.id)
+        items.append({
+            "id": ipo.id,
+            "company_id": ipo.company_id,
+            "name": ipo.company.name,
+            "slug": ipo.company.slug,
+            "sector": ipo.company.sector,
+            "status": ipo.status,
+            "listing_segment": ipo.listing_segment or ("SME" if "sme" in (ipo.company.exchange or "").lower() else "Mainboard"),
+            "exchange": ipo.company.exchange or "NSE/BSE",
+            "score": sc.overall_score if sc else None,
+            "price_band": [as_float(ipo.price_low), as_float(ipo.price_high)],
+            "issue_size_crore": as_float(ipo.issue_size),
+            "logo_url": getattr(ipo.company, "logo_url", None) or getattr(ipo, "logo_url", None),
+            "filing_type": doc.type if doc else None,
+            "has_filing": doc is not None,
+        })
+        
+    return {"items": items, "total": len(items), "query": clean_q}
 
 
 @app.post("/api/v1/ipos/sync")

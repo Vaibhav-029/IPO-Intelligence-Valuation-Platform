@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     jwt_refresh_days: int = 14
     cors_origins: str = "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:3002"
     llm_provider: str = "groq"
-    llm_model: str = "llama-3.3-70b-versatile"
+    llm_model: str = "qwen/qwen3.8-27b"
     groq_api_key: str = ""
     environment: str = "development"
     upload_dir: str = "./data/uploads"

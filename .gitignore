@@ -10,4 +10,5 @@ __pycache__/
 data/uploads/
 data/chroma/
 *.db
-
+backend/data/uploads/
+frontend/tsconfig.tsbuildinfo 

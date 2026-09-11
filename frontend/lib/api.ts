@@ -21,10 +21,33 @@ let currentAccessToken: string | null = null;
 
 export function setAccessToken(token: string | null) {
   currentAccessToken = token;
+  if (typeof window !== "undefined") {
+    try {
+      if (token) {
+        localStorage.setItem("access_token", token);
+      } else {
+        localStorage.removeItem("access_token");
+      }
+    } catch (e) {
+      console.warn("localStorage write error:", e);
+    }
+  }
 }
 
-export function getAccessToken() {
-  return currentAccessToken;
+export function getAccessToken(): string | null {
+  if (currentAccessToken) return currentAccessToken;
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("access_token");
+      if (stored) {
+        currentAccessToken = stored;
+        return stored;
+      }
+    } catch (e) {
+      console.warn("localStorage access error:", e);
+    }
+  }
+  return null;
 }
 
 export async function getIPOs(statusFilter?: string): Promise<IPO[]> {
@@ -45,8 +68,9 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   headers.set("Content-Type", "application/json");
 
   // Attach token if we have one
-  if (currentAccessToken) {
-    headers.set("Authorization", `Bearer ${currentAccessToken}`);
+  const token = getAccessToken();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
   const reqOptions = { ...options, headers };
@@ -59,7 +83,7 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   let r = await fetch(`${apiUrl}${path}`, reqOptions); 
 
   // If 401, attempt to refresh the token automatically
-  if (r.status === 401 && currentAccessToken) {
+  if (r.status === 401) {
     try {
       const refreshReq = await fetch(`${apiUrl}/auth/refresh`, {
         method: "POST",
@@ -76,9 +100,17 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
       } else {
         // Refresh failed, clear token so user is logged out
         setAccessToken(null);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("user_email");
+        }
       }
     } catch (e) {
       setAccessToken(null);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("user_email");
+      }
     }
   }
 
@@ -93,3 +125,86 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   if (r.status === 204) return null;
   return r.json(); 
 }
+
+export interface ResearchSessionItem {
+  id: number;
+  ipo_id: number;
+  title: string;
+  created_at: string;
+}
+
+export interface ResearchCitation {
+  document_id: number;
+  page?: number;
+  section?: string;
+  excerpt: string;
+}
+
+export interface ResearchClaim {
+  text: string;
+  citations: ResearchCitation[];
+}
+
+export interface ResearchMessageItem {
+  role: "user" | "assistant";
+  content: string;
+  tool_trace?: string[];
+  citations?: ResearchClaim[];
+  created_at: string;
+}
+
+export interface ResearchSessionDetail {
+  id: number;
+  ipo_id: number;
+  title: string;
+  messages: ResearchMessageItem[];
+}
+
+export interface ResearchResponse {
+  answer: string;
+  key_metrics?: {
+    company?: string;
+    sector?: string;
+    issue_size_crore?: number;
+    latest_revenue_crore?: number;
+    latest_pat_crore?: number;
+    revenue_cagr_2y?: number;
+    ebitda_margin?: number;
+    pe?: number;
+    ps?: number;
+  };
+  claims?: ResearchClaim[];
+  confidence?: string;
+  tool_trace?: string[];
+  mode?: string;
+  disclaimer?: string;
+}
+
+export async function getResearchSessions(): Promise<ResearchSessionItem[]> {
+  return apiFetch("/research/sessions");
+}
+
+export async function getResearchSession(sessionId: number): Promise<ResearchSessionDetail> {
+  return apiFetch(`/research/sessions/${sessionId}`);
+}
+
+export async function createResearchSession(ipoId: number, title?: string): Promise<{ id: number; ipo_id: number; title: string; created_at: string }> {
+  return apiFetch("/research/sessions", {
+    method: "POST",
+    body: JSON.stringify({ ipo_id: ipoId, title: title || "IPO research" })
+  });
+}
+
+export async function sendResearchMessage(sessionId: number, content: string): Promise<ResearchResponse> {
+  return apiFetch(`/research/sessions/${sessionId}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ content })
+  });
+}
+
+export async function deleteResearchSession(sessionId: number): Promise<void> {
+  return apiFetch(`/research/sessions/${sessionId}`, {
+    method: "DELETE"
+  });
+}
+

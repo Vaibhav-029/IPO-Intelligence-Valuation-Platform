@@ -147,6 +147,33 @@ def _ipo_kwargs(record: NormalizedIPO) -> dict:
     )
 
 
+_redis_available: bool | None = None
+
+def _is_redis_available() -> bool:
+    global _redis_available
+    if _redis_available is not None:
+        return _redis_available
+    try:
+        import redis
+        from app.core.config import get_settings
+        client = redis.from_url(get_settings().redis_url, socket_connect_timeout=0.2)
+        client.ping()
+        _redis_available = True
+    except Exception:
+        _redis_available = False
+    return _redis_available
+
+
+def _dispatch_filing_check(ipo_id: int) -> None:
+    if not _is_redis_available():
+        return
+    try:
+        from app.workers import check_filings_task
+        check_filings_task.apply_async(args=[ipo_id], retry=False)
+    except Exception as exc:
+        logger.warning("Could not dispatch check_filings_task for IPO %s: %s", ipo_id, exc)
+
+
 def _sync_single_record(db: Session, record: NormalizedIPO, report: SyncReport) -> None:
     """Process a single normalized IPO record."""
     # Look up by slug
@@ -168,6 +195,9 @@ def _sync_single_record(db: Session, record: NormalizedIPO, report: SyncReport) 
         db.add(ipo)
         db.flush()
         report.added += 1
+
+        # Trigger autonomous discovery for new IPO
+        _dispatch_filing_check(ipo.id)
         return
 
     # Company exists — find the IPO record
@@ -185,6 +215,9 @@ def _sync_single_record(db: Session, record: NormalizedIPO, report: SyncReport) 
         db.add(ipo)
         db.flush()
         report.added += 1
+
+        # Trigger autonomous discovery for new IPO
+        _dispatch_filing_check(ipo.id)
         return
 
     # Guard: Never overwrite live records with seed records
@@ -194,9 +227,14 @@ def _sync_single_record(db: Session, record: NormalizedIPO, report: SyncReport) 
 
     # IPO exists — check if it needs updating
     if _needs_update(ipo, record):
+        status_changed = ipo.status != record.status
         for key, value in _ipo_kwargs(record).items():
             setattr(ipo, key, value)
         report.updated += 1
+
+        # Trigger autonomous discovery on lifecycle update
+        if status_changed:
+            _dispatch_filing_check(ipo.id)
     else:
         # No changes — just update sync timestamp
         ipo.last_synced_at = datetime.utcnow()

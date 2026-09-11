@@ -87,21 +87,27 @@ def test_deterministic_fallback_risk():
 def test_answer_question_fallback_mode():
     """answer_question should work in deterministic fallback mode (no API key)."""
     db, ipo = _setup()
-    result = answer_question(db, ipo, "Why is this IPO valued at a premium?")
+    
+    with patch('app.services.research.get_llm_provider') as mock_get_llm:
+        mock_llm = MagicMock()
+        mock_llm.is_available = False
+        mock_get_llm.return_value = mock_llm
+        
+        result = answer_question(db, ipo, "Why is this IPO valued at a premium?")
 
-    # Response has the expected shape
-    assert "answer" in result
-    assert "key_metrics" in result
-    assert "claims" in result
-    assert "confidence" in result
-    assert "tool_trace" in result
-    assert "mode" in result
+        # Response has the expected shape
+        assert "answer" in result
+        assert "key_metrics" in result
+        assert "claims" in result
+        assert "confidence" in result
+        assert "tool_trace" in result
+        assert "mode" in result
 
-    # Should be in deterministic mode (no API key configured)
-    assert result["mode"] == "deterministic"
-    assert result["confidence"] == "low"
-    assert len(result["answer"]) > 20  # not empty
-    assert len(result["tool_trace"]) >= 5  # used most tools
+        # Should be in deterministic mode (no API key configured)
+        assert result["mode"] == "deterministic"
+        assert result["confidence"] == "low"
+        assert len(result["answer"]) > 20  # not empty
+        assert len(result["tool_trace"]) >= 5  # used most tools
 
     db.close()
 
@@ -226,3 +232,85 @@ def test_answer_question_malformed_json_fallback():
         assert len(result["claims"]) == 0
         
     db.close()
+
+
+def test_research_sessions_crud_and_isolation():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app.core.security import create_token, hash_password
+    from app.models import User
+
+    db, ipo = _setup()
+    
+    # Create User A and User B
+    user_a = User(email="analyst_a@example.com", password_hash=hash_password("Pass123!"))
+    user_b = User(email="analyst_b@example.com", password_hash=hash_password("Pass123!"))
+    db.add_all([user_a, user_b])
+    db.commit()
+    db.refresh(user_a)
+    db.refresh(user_b)
+    
+    from datetime import timedelta
+    token_a = create_token(user_a, "access", timedelta(hours=1))
+    token_b = create_token(user_b, "access", timedelta(hours=1))
+    headers_a = {"Authorization": f"Bearer {token_a}"}
+    headers_b = {"Authorization": f"Bearer {token_b}"}
+
+    client = TestClient(app)
+
+    # 1. User A creates session
+    res = client.post("/api/v1/research/sessions", json={"ipo_id": ipo.id, "title": "Desk Note 1"}, headers=headers_a)
+    assert res.status_code == 201
+    sess_id = res.json()["id"]
+
+    # 2. User A posts message (mock answer_question to avoid external LLM call)
+    with patch("app.main.answer_question") as mock_answer:
+        mock_answer.return_value = {
+            "answer": "Mock financial analysis",
+            "tool_trace": ["filing_search", "financial_metrics"],
+            "claims": [{"text": "Revenue is 500Cr", "citations": [{"document_id": 1, "page": 10, "section": "Fin", "excerpt": "500Cr"}]}],
+            "confidence": "high",
+            "mode": "deterministic"
+        }
+        res_msg = client.post(f"/api/v1/research/sessions/{sess_id}/messages", json={"content": "What is revenue?"}, headers=headers_a)
+        assert res_msg.status_code == 201
+        assert res_msg.json()["answer"] == "Mock financial analysis"
+
+    # 3. User A lists sessions -> should include this session
+    res_list_a = client.get("/api/v1/research/sessions", headers=headers_a)
+    assert res_list_a.status_code == 200
+    sessions_a = res_list_a.json()
+    assert any(s["id"] == sess_id for s in sessions_a)
+
+    # 4. User A gets session details -> should have user and assistant messages
+    res_detail_a = client.get(f"/api/v1/research/sessions/{sess_id}", headers=headers_a)
+    assert res_detail_a.status_code == 200
+    detail_data = res_detail_a.json()
+    assert detail_data["id"] == sess_id
+    assert len(detail_data["messages"]) == 2
+
+    # 5. Isolation: User B lists sessions -> should NOT see User A's session
+    res_list_b = client.get("/api/v1/research/sessions", headers=headers_b)
+    assert res_list_b.status_code == 200
+    assert not any(s["id"] == sess_id for s in res_list_b.json())
+
+    # 6. Isolation: User B tries to view User A's session -> 404
+    res_detail_b = client.get(f"/api/v1/research/sessions/{sess_id}", headers=headers_b)
+    assert res_detail_b.status_code == 404
+
+    # 7. Isolation: User B tries to delete User A's session -> 404
+    res_del_b = client.delete(f"/api/v1/research/sessions/{sess_id}", headers=headers_b)
+    assert res_del_b.status_code == 404
+
+    # 8. User A deletes session -> 204
+    res_del_a = client.delete(f"/api/v1/research/sessions/{sess_id}", headers=headers_a)
+    assert res_del_a.status_code == 204
+
+    # 9. Session is now gone
+    res_list_after = client.get("/api/v1/research/sessions", headers=headers_a)
+    assert not any(s["id"] == sess_id for s in res_list_after.json())
+    res_get_after = client.get(f"/api/v1/research/sessions/{sess_id}", headers=headers_a)
+    assert res_get_after.status_code == 404
+
+    db.close()
+

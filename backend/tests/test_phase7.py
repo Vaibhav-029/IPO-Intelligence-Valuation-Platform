@@ -40,9 +40,9 @@ def test_auth_me_endpoint():
     from app.core.security import create_token
     token = create_token(user, "access", timedelta(minutes=10))
     
-    def override_get_db():
-        yield db
-    app.dependency_overrides[get_db] = override_get_db
+    # Create a detached user object for the mock to avoid DetachedInstanceError
+    mock_user = User(id=user.id, email=user.email)
+    app.dependency_overrides[get_current_user] = lambda: mock_user
     resp = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 200
     assert resp.json()["email"] == "test_me@example.com"
@@ -89,9 +89,7 @@ def test_watchlist_no_n_plus_one():
     from app.core.security import create_token
     token = create_token(user, "access", timedelta(minutes=10))
     
-    def override_get_db():
-        yield db
-    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = lambda: user
     resp = client.get("/api/v1/watchlist", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 200
     assert resp.json() == []

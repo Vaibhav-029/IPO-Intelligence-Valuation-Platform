@@ -17,7 +17,7 @@ from alembic.runtime.migration import MigrationContext
 import os
 
 logger = logging.getLogger("api")
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import Session, joinedload
 from app.analytics.financials import enterprise_value, margin, revenue_cagr
 from app.core.config import get_settings
@@ -56,7 +56,30 @@ def startup() -> None:
     if settings.environment == "development":
         Base.metadata.create_all(bind=engine)
         with next(get_db()) as db:
-            seed_demo_data(db)
+            seed_demo_data(db, include_live=True)
+            try:
+                has_active = db.scalar(select(IPO.id).where(IPO.status.in_(["Ongoing", "Upcoming"])).limit(1))
+                if not has_active:
+                    from pathlib import Path
+                    import json
+                    live_feed_file = Path(__file__).resolve().parent.parent / "data" / "live_ipos_feed.json"
+                    if live_feed_file.exists():
+                        try:
+                            with open(live_feed_file, "r", encoding="utf-8") as f:
+                                live_items = json.load(f)
+                            from app.providers import NormalizedIPO
+                            from app.services.sync import _sync_single_record, SyncReport
+                            rep = SyncReport()
+                            for raw in live_items:
+                                _sync_single_record(db, NormalizedIPO(**raw), rep)
+                            db.commit()
+                        except Exception as e:
+                            logger.warning(f"Error loading live feed JSON: {e}")
+                    from app.providers.live import LiveIPOProvider
+                    from app.services.sync import sync_ipos
+                    sync_ipos(db, LiveIPOProvider())
+            except Exception as e:
+                logger.warning(f"Initial live IPO sync skipped or failed: {e}")
     else:
         alembic_ini_path = os.path.join(os.path.dirname(__file__), "..", "alembic.ini")
         alembic_cfg = Config(alembic_ini_path)
@@ -148,7 +171,7 @@ def issue_tokens(user: User, response: Response) -> dict:
     access = create_token(user, "access", timedelta(minutes=settings.jwt_access_minutes))
     refresh = create_token(user, "refresh", timedelta(days=settings.jwt_refresh_days))
     is_prod = settings.environment == "production"
-    response.set_cookie("refresh_token", refresh, httponly=True, secure=is_prod, samesite="lax", max_age=settings.jwt_refresh_days * 86400)
+    response.set_cookie("refresh_token", refresh, httponly=True, secure=is_prod, samesite="lax", path="/", max_age=settings.jwt_refresh_days * 86400)
     return {"access_token": access, "refresh_token": refresh, "token_type": "bearer"}
 
 
@@ -178,7 +201,7 @@ def refresh(response: Response, request: Request, db: Session = Depends(get_db))
 
 @app.post("/api/v1/auth/logout", status_code=204)
 def logout(response: Response, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    user.refresh_token_version += 1; db.commit(); response.delete_cookie("refresh_token")
+    user.refresh_token_version += 1; db.commit(); response.delete_cookie("refresh_token", path="/")
 
 
 @app.get("/api/v1/ipos")
@@ -188,7 +211,8 @@ def list_ipos(q: str | None = None, sector: str | None = None, status_filter: st
     if q: statement = statement.where((Company.name.ilike(f"%{q}%")) | (Company.sector.ilike(f"%{q}%")))
     if sector: statement = statement.where(Company.sector == sector)
     if status_filter: 
-        statement = statement.where(IPO.status == status_filter)
+        if status_filter.lower() != "all":
+            statement = statement.where(IPO.status == status_filter)
     else:
         # Default feed: Ongoing, Upcoming, Recent Closed within window, Recent Listed within window
         from sqlalchemy import func
@@ -717,12 +741,32 @@ def research_message(session_id: int, payload: ResearchQuestion, request: Reques
     return result
 
 
+@app.get("/api/v1/research/sessions")
+def list_research_sessions(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    sessions = db.scalars(
+        select(ResearchSession)
+        .where(ResearchSession.user_id == user.id)
+        .order_by(ResearchSession.created_at.desc())
+    ).all()
+    return [{"id": s.id, "ipo_id": s.ipo_id, "title": s.title, "created_at": s.created_at} for s in sessions]
+
+
 @app.get("/api/v1/research/sessions/{session_id}")
 def get_research_session(session_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     session = db.scalar(select(ResearchSession).where(ResearchSession.id == session_id, ResearchSession.user_id == user.id))
     if not session: raise HTTPException(404, "Research session not found")
     messages = db.scalars(select(ResearchMessage).where(ResearchMessage.session_id == session.id).order_by(ResearchMessage.created_at)).all()
     return {"id": session.id, "title": session.title, "ipo_id": session.ipo_id, "messages": [{"role": m.role, "content": m.content, "tool_trace": m.tool_trace, "citations": m.citations, "created_at": m.created_at} for m in messages]}
+
+
+@app.delete("/api/v1/research/sessions/{session_id}", status_code=204)
+def delete_research_session(session_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    session = db.scalar(select(ResearchSession).where(ResearchSession.id == session_id, ResearchSession.user_id == user.id))
+    if not session: raise HTTPException(404, "Research session not found")
+    db.execute(delete(ResearchMessage).where(ResearchMessage.session_id == session.id))
+    db.delete(session)
+    db.commit()
+    return None
 
 
 @app.get("/api/v1/watchlist")

@@ -555,7 +555,7 @@ def extract_financials(
             result.errors.append(f"No valid metric values extracted for {fiscal_year}")
             continue
 
-        # 9. Idempotent upsert: check for existing period
+        # 9. Idempotent upsert with Field-Level Precedence
         existing_period = db.scalar(
             select(FinancialPeriod).where(
                 FinancialPeriod.company_id == company_id,
@@ -563,31 +563,47 @@ def extract_financials(
             )
         )
 
+        doc_type = document.type.upper() if document.type else "UNKNOWN"
+        DOC_WEIGHTS = {"PROSPECTUS": 30, "RHP": 20, "DRHP": 10, "UNKNOWN": 0}
+        incoming_weight = DOC_WEIGHTS.get(doc_type, 0)
+
+        # Update derived fields with weight
+        for k in derived_fields:
+            derived_fields[k]["weight"] = incoming_weight
+            derived_fields[k]["doc_type"] = doc_type
+
         if existing_period:
-            # Update existing metric
             existing_metric = db.scalar(
                 select(FinancialMetric).where(
                     FinancialMetric.period_id == existing_period.id
                 )
             )
             if existing_metric:
-                # Only update if source is filing_extraction (don't overwrite curated data)
-                if existing_metric.source_type == "filing_extraction" or existing_metric.source_type is None:
-                    for mn in METRIC_NAMES:
-                        val = normalized_metrics.get(mn)
-                        if val is not None:
-                            setattr(existing_metric, mn, val)
-                    existing_metric.source_type = "filing_extraction"
-                    existing_metric.source_reference = primary_ref
-                    existing_metric.derived_fields = derived_fields
-                    updated_count += 1
-                else:
-                    # Don't overwrite curated data
+                if existing_metric.source_type not in ["filing_extraction", None]:
                     result.errors.append(
                         f"Skipping {fiscal_year}: existing data from '{existing_metric.source_type}' "
                         f"takes precedence over filing extraction"
                     )
                     continue
+
+                existing_derived = dict(existing_metric.derived_fields or {})
+                updated_any = False
+
+                for mn in METRIC_NAMES:
+                    val = normalized_metrics.get(mn)
+                    if val is not None:
+                        # Field-level precedence check
+                        existing_weight = existing_derived.get(mn, {}).get("weight", 0)
+                        if incoming_weight >= existing_weight:
+                            setattr(existing_metric, mn, val)
+                            existing_derived[mn] = derived_fields[mn]
+                            updated_any = True
+
+                if updated_any:
+                    existing_metric.source_type = "filing_extraction"
+                    existing_metric.source_reference = primary_ref
+                    existing_metric.derived_fields = existing_derived
+                    updated_count += 1
             else:
                 # Period exists but no metric — create one
                 metric = FinancialMetric(

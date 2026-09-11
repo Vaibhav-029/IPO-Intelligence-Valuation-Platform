@@ -106,7 +106,9 @@ def derive_post_issue_shares(pre_issue_shares: int | None, fresh_issue_shares: i
 
 
 def premium_discount(company_multiple: float | None, peer_median: float | None) -> float | None:
-    ratio = safe_divide((company_multiple or 0) - (peer_median or 0), peer_median)
+    if company_multiple is None or peer_median is None or peer_median == 0:
+        return None
+    ratio = safe_divide(company_multiple - peer_median, peer_median)
     return round(ratio * 100, 2) if ratio is not None else None
 
 

@@ -118,7 +118,7 @@ def _parse_date(date_str: str) -> date:
     return date.fromisoformat(date_str)
 
 
-def seed_demo_data(db: Session) -> None:
+def seed_demo_data(db: Session, include_live: bool = False) -> None:
     """
     Populate the database with real IPO company data.
 
@@ -324,5 +324,30 @@ def seed_demo_data(db: Session) -> None:
                     confidence=0.75,
                 )
             )
+
+    # ── 7. Seed default analyst demo account ──
+    from app.models import User
+    from app.core.security import hash_password
+    if not db.scalar(select(User).where(User.email == "analyst_test@example.com")):
+        db.add(User(email="analyst_test@example.com", password_hash=hash_password("Password123!"), is_active=True))
+
+    # ── 8. Seed live IPO feed records if requested and available ──
+    if include_live:
+        live_feed_file = Path(__file__).resolve().parent.parent / "data" / "live_ipos_feed.json"
+        if live_feed_file.exists():
+            try:
+                with open(live_feed_file, "r", encoding="utf-8") as f:
+                    live_items = json.load(f)
+                from app.providers import NormalizedIPO
+                from app.services.sync import _sync_single_record, SyncReport
+                report = SyncReport()
+                for raw in live_items:
+                    try:
+                        norm = NormalizedIPO(**raw)
+                        _sync_single_record(db, norm, report)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
 
     db.commit()

@@ -26,39 +26,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize session on mount
   useEffect(() => {
-    // Check if we saved a user in localStorage
-    const savedEmail = localStorage.getItem("user_email");
-    const token = localStorage.getItem("access_token");
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    const savedEmail = typeof window !== "undefined" ? localStorage.getItem("user_email") : null;
     
-    if (savedEmail && token) {
-      setUser({ email: savedEmail });
+    if (token) {
       setAccessToken(token);
-    } else {
-      // Even if we don't have an access token, we might have a refresh cookie.
-      // A robust app would try to call /auth/refresh here to hydrate the session.
-      // For simplicity, we'll try to refresh silently on mount.
-      apiFetch("/auth/refresh", { method: "POST" })
+      apiFetch("/auth/me")
         .then((data) => {
-          if (data && data.access_token) {
-            setAccessToken(data.access_token);
-            // Decode JWT payload to get email (or call a /me endpoint)
-            // JWT payload has "sub" (id) and typically "email" depending on our implementation.
-            // Our backend encodes user sub and type. Email is not in the token. 
-            // A small limitation without a `/me` endpoint, so we fallback to a placeholder if needed.
-            // Ideally backend would have /api/v1/auth/me. 
-            setUser({ email: "user@ipointelligence.com" }); 
-            localStorage.setItem("access_token", data.access_token);
+          if (data && data.authenticated) {
+            setUser({ email: data.email || savedEmail || "user@ipointelligence.com" });
+            if (data.email) localStorage.setItem("user_email", data.email);
+          } else {
+            setUser(null);
+            setAccessToken(null);
           }
         })
         .catch(() => {
-          // Normal if not logged in
+          // Token may be expired, try refresh
+          apiFetch("/auth/refresh", { method: "POST" })
+            .then((refData) => {
+              if (refData && refData.access_token) {
+                setAccessToken(refData.access_token);
+                return apiFetch("/auth/me").then((meData) => {
+                  setUser({ email: meData.email });
+                  localStorage.setItem("user_email", meData.email);
+                });
+              } else {
+                setUser(null);
+                setAccessToken(null);
+              }
+            })
+            .catch(() => {
+              setUser(null);
+              setAccessToken(null);
+            })
+            .finally(() => setLoading(false));
+          return;
         })
-        .finally(() => {
-          setLoading(false);
-        });
-        return;
+        .finally(() => setLoading(false));
+      return;
     }
-    setLoading(false);
+
+    // No access token in localStorage, try refresh cookie
+    apiFetch("/auth/refresh", { method: "POST" })
+      .then((refData) => {
+        if (refData && refData.access_token) {
+          setAccessToken(refData.access_token);
+          apiFetch("/auth/me")
+            .then((meData) => {
+              setUser({ email: meData.email });
+              localStorage.setItem("user_email", meData.email);
+            })
+            .catch(() => {
+              setUser({ email: savedEmail || "user@ipointelligence.com" });
+            });
+        } else {
+          setUser(null);
+        }
+      })
+      .catch(() => {
+        setUser(null);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const login = async (email: string, password: string) => {

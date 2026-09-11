@@ -52,6 +52,12 @@ class DisabledProvider:
         return {"content": "", "tool_calls": []}
 
 
+import httpx
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
+
+class RateLimitError(Exception):
+    pass
+
 class GroqProvider:
     """Groq Cloud — uses the OpenAI-compatible chat completions endpoint."""
 
@@ -65,6 +71,12 @@ class GroqProvider:
     def is_available(self) -> bool:
         return True
 
+    @retry(
+        wait=wait_exponential(multiplier=1, min=2, max=30),
+        stop=stop_after_attempt(5),
+        retry=retry_if_exception_type(RateLimitError),
+        reraise=True
+    )
     def generate_sync(
         self,
         *,
@@ -96,19 +108,34 @@ class GroqProvider:
                 json=payload,
                 timeout=45.0,
             )
+            
+            if response.status_code == 429:
+                logger.warning("LLM HTTP 429 Rate Limit: %s", response.text[:200])
+                retry_after = response.headers.get("Retry-After")
+                if retry_after:
+                    try:
+                        import time
+                        sleep_time = float(retry_after)
+                        logger.info(f"Sleeping for {sleep_time}s as per Retry-After header")
+                        time.sleep(sleep_time)
+                    except ValueError:
+                        pass
+                raise RateLimitError("Rate limit reached")
+                
             response.raise_for_status()
             message = response.json()["choices"][0]["message"]
             return {
                 "content": message.get("content") or "",
                 "tool_calls": message.get("tool_calls") or []
             }
+        except RateLimitError:
+            raise
         except httpx.HTTPStatusError as exc:
             logger.warning("LLM HTTP error %s: %s", exc.response.status_code, exc.response.text[:200])
             return {"content": "", "tool_calls": []}
         except Exception as exc:
             logger.warning("LLM call failed: %s", exc)
             return {"content": "", "tool_calls": []}
-
 
 def get_llm_provider() -> LLMProvider:
     """Factory — returns the configured provider or DisabledProvider."""

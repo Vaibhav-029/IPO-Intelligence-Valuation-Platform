@@ -33,8 +33,9 @@ def test_is_likely_heading():
     assert is_likely_heading("") is False
 
 
+@patch("app.workers.enrich_ipo_task.delay")
 @patch("app.services.documents.fitz")
-def test_process_document_extraction(mock_fitz, db_session: Session):
+def test_process_document_extraction(mock_fitz, mock_enrich_delay, db_session: Session):
     # Mock PDF behavior
     mock_doc = MagicMock()
     mock_page1 = MagicMock()
@@ -188,7 +189,14 @@ def test_access_control(client: TestClient, db_session: Session):
     client.app.dependency_overrides.pop(get_current_user, None)
 
 
-def test_deduplication(client: TestClient, db_session: Session, tmp_path, monkeypatch):
+@patch("app.main.process_document")
+@patch("app.main.process_document_task.delay")
+@patch("fitz.open")
+def test_deduplication(mock_fitz_open, mock_process_delay, mock_process_document, client: TestClient, db_session: Session, tmp_path, monkeypatch):
+    mock_pdf = MagicMock()
+    mock_pdf.page_count = 10
+    mock_fitz_open.return_value = mock_pdf
+    
     u1 = User(email="dup1@test.com", password_hash="hash")
     u2 = User(email="dup2@test.com", password_hash="hash")
     company = Company(name="Dup Co", slug="dup-co", sector="Tech")

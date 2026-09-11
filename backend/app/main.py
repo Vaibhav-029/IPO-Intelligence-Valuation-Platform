@@ -794,11 +794,18 @@ def watchlist(user: User = Depends(get_current_user), db: Session = Depends(get_
             "watchlist_id": row.id,
             "ipo_id": row.ipo_id,
             "name": ipo.company.name,
+            "slug": ipo.company.slug,
             "sector": ipo.company.sector,
             "status": ipo.status,
+            "listing_segment": ipo.listing_segment or ("SME" if "sme" in (ipo.company.exchange or "").lower() else "Mainboard"),
+            "exchange": ipo.company.exchange or "NSE/BSE",
             "score": score.overall_score if score else None,
             "issue_size_crore": as_float(ipo.issue_size),
             "price_band": [as_float(ipo.price_low), as_float(ipo.price_high)],
+            "open_date": str(ipo.open_date) if ipo.open_date else None,
+            "close_date": str(ipo.close_date) if ipo.close_date else None,
+            "listing_date": str(ipo.listing_date) if ipo.listing_date else None,
+            "logo_url": getattr(ipo.company, "logo_url", None) or getattr(ipo, "logo_url", None),
             "saved_at": str(row.created_at),
         })
     return items
@@ -811,6 +818,21 @@ def add_watchlist(payload: WatchlistRequest, user: User = Depends(get_current_us
     if existing: return {"id": existing.id, "ipo_id": existing.ipo_id, "created": False}
     row = Watchlist(user_id=user.id, ipo_id=payload.ipo_id); db.add(row); db.commit(); db.refresh(row)
     return {"id": row.id, "ipo_id": row.ipo_id, "created": True}
+
+
+@app.delete("/api/v1/watchlist/{item_id}", status_code=204)
+def delete_watchlist(item_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    row = db.scalar(
+        select(Watchlist).where(
+            Watchlist.user_id == user.id,
+            (Watchlist.id == item_id) | (Watchlist.ipo_id == item_id)
+        )
+    )
+    if not row:
+        raise HTTPException(404, "Watchlist item not found")
+    db.delete(row)
+    db.commit()
+    return None
 
 
 from app.analytics.dcf import run_dcf, calculate_sensitivity_matrix

@@ -96,6 +96,57 @@ def test_watchlist_no_n_plus_one():
     app.dependency_overrides.clear()
     db.close()
 
+def test_watchlist_crud_lifecycle():
+    from sqlalchemy import select
+    from app.models import IPO
+    client = TestClient(app)
+    db = _fresh_db()
+    user = User(email="crud_watch@example.com", password_hash="hash")
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    
+    from app.core.security import create_token
+    token = create_token(user, "access", timedelta(minutes=10))
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    app.dependency_overrides[get_current_user] = lambda: user
+    
+    # 1. Initially empty
+    resp = client.get("/api/v1/watchlist", headers=headers)
+    assert resp.status_code == 200
+    assert resp.json() == []
+    
+    # 2. Add an IPO
+    ipo = db.scalars(select(IPO)).first()
+    assert ipo is not None
+    
+    resp = client.post("/api/v1/watchlist", json={"ipo_id": ipo.id}, headers=headers)
+    assert resp.status_code == 201
+    created_data = resp.json()
+    assert created_data["ipo_id"] == ipo.id
+    
+    # 3. Verify retrieved list
+    resp = client.get("/api/v1/watchlist", headers=headers)
+    assert resp.status_code == 200
+    items = resp.json()
+    assert len(items) == 1
+    assert items[0]["ipo_id"] == ipo.id
+    assert items[0]["name"] is not None
+    assert "slug" in items[0]
+    
+    # 4. Delete item
+    resp = client.delete(f"/api/v1/watchlist/{items[0]['watchlist_id']}", headers=headers)
+    assert resp.status_code == 204
+    
+    # 5. Verify empty again
+    resp = client.get("/api/v1/watchlist", headers=headers)
+    assert resp.status_code == 200
+    assert resp.json() == []
+    
+    app.dependency_overrides.clear()
+    db.close()
+
 def test_global_500_handler():
     client = TestClient(app, raise_server_exceptions=False)
     @app.get("/crash")

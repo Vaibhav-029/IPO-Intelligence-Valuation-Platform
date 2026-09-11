@@ -1,19 +1,19 @@
 export const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
-export type IPO = { 
-  id:number; 
-  name:string; 
-  slug:string; 
-  sector:string; 
-  exchange?:string; 
-  status:string; 
-  issue_size_crore:number; 
-  price_band:[number,number]; 
-  issue_date?:string; 
-  score?:number; 
-  description?:string;
-  listing_segment?:string | null;
-  logo_url?:string | null;
+export type IPO = {
+  id: number;
+  name: string;
+  slug: string;
+  sector: string;
+  exchange?: string;
+  status: string;
+  issue_size_crore: number;
+  price_band: [number, number];
+  issue_date?: string;
+  score?: number;
+  description?: string;
+  listing_segment?: string | null;
+  logo_url?: string | null;
 };
 
 // Global token storage for the frontend
@@ -57,13 +57,13 @@ export async function getIPOs(statusFilter?: string): Promise<IPO[]> {
   return (await response.json()).items;
 }
 
-export async function getIPO(id: number) { 
-  const r = await fetch(`${apiUrl}/ipos/${id}`, {cache:"no-store"}); 
-  if(!r.ok) throw new Error("IPO unavailable"); 
-  return r.json(); 
+export async function getIPO(id: number) {
+  const r = await fetch(`${apiUrl}/ipos/${id}`, { cache: "no-store" });
+  if (!r.ok) throw new Error("IPO unavailable");
+  return r.json();
 }
 
-export async function apiFetch(path: string, options: RequestInit = {}) { 
+export async function apiFetch(path: string, options: RequestInit = {}) {
   const headers = new Headers(options.headers || {});
   headers.set("Content-Type", "application/json");
 
@@ -74,13 +74,13 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   }
 
   const reqOptions = { ...options, headers };
-  
+
   // Note: credentials "include" is required so the browser sends the httpOnly refresh_token cookie
   if (!reqOptions.credentials) {
     reqOptions.credentials = "include";
   }
 
-  let r = await fetch(`${apiUrl}${path}`, reqOptions); 
+  let r = await fetch(`${apiUrl}${path}`, reqOptions);
 
   // If 401, attempt to refresh the token automatically
   if (r.status === 401) {
@@ -89,11 +89,11 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
         method: "POST",
         credentials: "include"
       });
-      
+
       if (refreshReq.ok) {
         const { access_token } = await refreshReq.json();
         setAccessToken(access_token);
-        
+
         // Retry original request with new token
         headers.set("Authorization", `Bearer ${access_token}`);
         r = await fetch(`${apiUrl}${path}`, { ...options, headers });
@@ -123,7 +123,7 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
 
   // 204 No Content won't have a JSON body
   if (r.status === 204) return null;
-  return r.json(); 
+  return r.json();
 }
 
 export interface ResearchSessionItem {
@@ -205,6 +205,42 @@ export async function sendResearchMessage(sessionId: number, content: string): P
 export async function deleteResearchSession(sessionId: number): Promise<void> {
   return apiFetch(`/research/sessions/${sessionId}`, {
     method: "DELETE"
+  });
+}
+
+export interface WatchlistItem {
+  watchlist_id: number;
+  ipo_id: number;
+  name: string;
+  slug: string;
+  sector: string;
+  status: string;
+  listing_segment: string;
+  exchange: string;
+  score?: number | null;
+  issue_size_crore?: number | null;
+  price_band?: [number, number];
+  open_date?: string | null;
+  close_date?: string | null;
+  listing_date?: string | null;
+  saved_at?: string;
+  logo_url?: string | null;
+}
+
+export async function getWatchlist(): Promise<WatchlistItem[]> {
+  return apiFetch("/watchlist");
+}
+
+export async function addToWatchlist(ipoId: number): Promise<{ id: number; ipo_id: number; created: boolean }> {
+  return apiFetch("/watchlist", {
+    method: "POST",
+    body: JSON.stringify({ ipo_id: ipoId }),
+  });
+}
+
+export async function removeFromWatchlist(itemIdOrIpoId: number): Promise<void> {
+  return apiFetch(`/watchlist/${itemIdOrIpoId}`, {
+    method: "DELETE",
   });
 }
 

@@ -52,11 +52,26 @@ def _parse_date(date_str: str | None) -> date | None:
 
 def _needs_update(ipo: IPO, record: NormalizedIPO) -> bool:
     """Check if the IPO record has changed and needs updating."""
+    rec_open = _parse_date(record.open_date)
+    rec_close = _parse_date(record.close_date)
+    rec_listing = _parse_date(record.listing_date)
+    rec_issue = _parse_date(record.issue_date)
+
     return (
         ipo.status != record.status
-        or float(ipo.price_low) != record.price_low
-        or float(ipo.price_high) != record.price_high
-        or float(ipo.issue_size) != record.issue_size_crore
+        or ipo.open_date != rec_open
+        or ipo.close_date != rec_close
+        or ipo.listing_date != rec_listing
+        or ipo.issue_date != rec_issue
+        or float(ipo.price_low or 0) != float(record.price_low or 0)
+        or float(ipo.price_high or 0) != float(record.price_high or 0)
+        or float(ipo.issue_size or 0) != float(record.issue_size_crore or 0)
+        or (record.listing_segment is not None and ipo.listing_segment != record.listing_segment)
+        or (record.lot_size is not None and ipo.lot_size != record.lot_size)
+        or (record.face_value is not None and float(ipo.face_value or 0) != float(record.face_value or 0))
+        or (record.shares_offered is not None and ipo.shares_offered != record.shares_offered)
+        or (record.fresh_issue_crore is not None and float(ipo.fresh_issue or 0) != float(record.fresh_issue_crore or 0))
+        or (record.ofs_crore is not None and float(ipo.ofs or 0) != float(record.ofs_crore or 0))
     )
 
 def _infer_lifecycle_status(record: NormalizedIPO) -> str:
@@ -224,6 +239,9 @@ def _sync_single_record(db: Session, record: NormalizedIPO, report: SyncReport) 
     if ipo.data_source == "live" and record.data_source == "seed":
         report.skipped += 1
         return
+
+    # Infer authoritative lifecycle status from dates before evaluating update
+    record.status = _infer_lifecycle_status(record)
 
     # IPO exists — check if it needs updating
     if _needs_update(ipo, record):

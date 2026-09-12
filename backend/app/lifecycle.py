@@ -93,3 +93,32 @@ def parse_date_safe(date_str: str | None) -> date | None:
         return date.fromisoformat(str(date_str))
     except (ValueError, TypeError):
         return None
+
+
+def reconcile_db_lifecycles(db, reference_date: date | None = None) -> int:
+    """Reconcile stored IPO statuses with canonical lifecycle rules based on dates.
+
+    Returns the number of IPO records whose status was updated.
+    Does not make network calls or invoke LLM/Celery. Safe for fast startup.
+    """
+    from sqlalchemy import select
+    from app.models import IPO
+
+    ipos = db.scalars(select(IPO)).all()
+    updated_count = 0
+    for ipo in ipos:
+        current_effective = compute_lifecycle_status(
+            open_date=ipo.open_date,
+            close_date=ipo.close_date,
+            listing_date=ipo.listing_date,
+            issue_date=ipo.issue_date,
+            static_status=ipo.status,
+            reference_date=reference_date,
+        )
+        if ipo.status != current_effective:
+            ipo.status = current_effective
+            updated_count += 1
+    if updated_count > 0:
+        db.commit()
+    return updated_count
+

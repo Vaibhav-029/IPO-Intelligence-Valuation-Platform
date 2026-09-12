@@ -74,12 +74,20 @@ def company_snapshot(db: Session, ipo: IPO) -> dict:
             "pat_margin_pct": margin(float(metric.pat), float(metric.revenue)),
         })
 
+    from app.lifecycle import compute_lifecycle_status
+    eff_status = compute_lifecycle_status(
+        open_date=ipo.open_date,
+        close_date=ipo.close_date,
+        listing_date=ipo.listing_date,
+        issue_date=ipo.issue_date,
+        static_status=ipo.status,
+    )
     return {
         "company": ipo.company.name,
         "sector": ipo.company.sector,
         "description": ipo.company.description,
         "exchange": ipo.company.exchange,
-        "ipo_status": ipo.status,
+        "ipo_status": eff_status,
         "issue_size_crore": float(ipo.issue_size),
         "price_band": [float(ipo.price_low), float(ipo.price_high)],
         "financials_series": financials_series,

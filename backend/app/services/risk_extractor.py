@@ -279,7 +279,7 @@ def extract_risks(
                 {"role": "user", "content": prompt},
             ],
             temperature=0.05,
-            max_tokens=2500,
+            max_tokens=900,
             response_format="json_object",
         )
     except Exception as e:

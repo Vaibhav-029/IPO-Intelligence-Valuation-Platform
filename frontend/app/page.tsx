@@ -233,7 +233,7 @@ export default function MarketPage() {
               </span>
               <span>NSE / BSE Mainboard &amp; SME Tracker</span>
               <span style={{ color: "var(--border-strong)" }}>|</span>
-              <span style={{ color: "var(--text-muted)" }}>Live Feed</span>
+              <span style={{ color: "var(--text-muted)" }}>Synchronized Feed</span>
             </div>
           </div>
         </div>

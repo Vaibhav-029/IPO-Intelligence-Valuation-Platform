@@ -20,6 +20,7 @@ logger = logging.getLogger("api")
 from sqlalchemy import select, delete, or_, case, func
 from sqlalchemy.orm import Session, joinedload
 from app.analytics.financials import enterprise_value, margin, revenue_cagr
+from app.lifecycle import compute_lifecycle_status
 from app.core.config import get_settings
 from app.core.security import create_token, decode_token, get_current_user, hash_password, verify_password
 from app.db import Base, engine, get_db
@@ -57,29 +58,12 @@ def startup() -> None:
         Base.metadata.create_all(bind=engine)
         with next(get_db()) as db:
             seed_demo_data(db, include_live=True)
+            # Lightweight local lifecycle reconciliation (fast, no HTTP/Celery/Redis/LLM)
             try:
-                has_active = db.scalar(select(IPO.id).where(IPO.status.in_(["Ongoing", "Upcoming"])).limit(1))
-                if not has_active:
-                    from pathlib import Path
-                    import json
-                    live_feed_file = Path(__file__).resolve().parent.parent / "data" / "live_ipos_feed.json"
-                    if live_feed_file.exists():
-                        try:
-                            with open(live_feed_file, "r", encoding="utf-8") as f:
-                                live_items = json.load(f)
-                            from app.providers import NormalizedIPO
-                            from app.services.sync import _sync_single_record, SyncReport
-                            rep = SyncReport()
-                            for raw in live_items:
-                                _sync_single_record(db, NormalizedIPO(**raw), rep)
-                            db.commit()
-                        except Exception as e:
-                            logger.warning(f"Error loading live feed JSON: {e}")
-                    from app.providers.live import LiveIPOProvider
-                    from app.services.sync import sync_ipos
-                    sync_ipos(db, LiveIPOProvider())
+                from app.lifecycle import reconcile_db_lifecycles
+                reconcile_db_lifecycles(db)
             except Exception as e:
-                logger.warning(f"Initial live IPO sync skipped or failed: {e}")
+                logger.warning(f"Startup lifecycle reconciliation skipped or failed: {e}")
     else:
         alembic_ini_path = os.path.join(os.path.dirname(__file__), "..", "alembic.ini")
         alembic_cfg = Config(alembic_ini_path)
@@ -129,6 +113,14 @@ def ipo_payload(ipo: IPO, score: IPOSCore | None = None) -> dict:
     sector = ipo.company.sector if ipo.company.sector and ipo.company.sector != "Unknown" else None
     logo_url = getattr(ipo.company, "logo_url", None) or getattr(ipo, "logo_url", None)
     effective_open = ipo.open_date or ipo.issue_date
+    from app.lifecycle import compute_lifecycle_status
+    effective_status = getattr(ipo, "_effective_status", None) or compute_lifecycle_status(
+        open_date=ipo.open_date,
+        close_date=ipo.close_date,
+        listing_date=ipo.listing_date,
+        issue_date=ipo.issue_date,
+        static_status=ipo.status,
+    )
     return {
         "id": ipo.id,
         "company_id": ipo.company_id,
@@ -136,7 +128,7 @@ def ipo_payload(ipo: IPO, score: IPOSCore | None = None) -> dict:
         "slug": ipo.company.slug,
         "sector": sector,
         "exchange": ipo.company.exchange,
-        "status": ipo.status,
+        "status": effective_status,
         "listing_segment": ipo.listing_segment,
         "issue_size_crore": as_float(ipo.issue_size),
         "price_band": [as_float(ipo.price_low), as_float(ipo.price_high)],
@@ -207,42 +199,69 @@ def logout(response: Response, user: User = Depends(get_current_user), db: Sessi
 @app.get("/api/v1/ipos")
 def list_ipos(q: str | None = None, sector: str | None = None, status_filter: str | None = None, page: int = 1, page_size: int = 50, db: Session = Depends(get_db)):
     from datetime import date, timedelta
-    statement = select(IPO).join(Company).options(joinedload(IPO.company)).order_by(IPO.issue_date.desc())
+    from app.lifecycle import compute_lifecycle_status
+
+    statement = select(IPO).join(Company).options(joinedload(IPO.company)).order_by(IPO.issue_date.desc().nullslast(), IPO.id.desc())
     if q: statement = statement.where((Company.name.ilike(f"%{q}%")) | (Company.sector.ilike(f"%{q}%")))
     if sector: statement = statement.where(Company.sector == sector)
-    if status_filter: 
-        if status_filter.lower() != "all":
-            statement = statement.where(IPO.status == status_filter)
-    else:
-        # Default feed: Ongoing, Upcoming, Recent Closed within window, Recent Listed within window
-        from sqlalchemy import func
-        today = date.today()
-        recent_closed_date = today - timedelta(days=settings.recently_closed_days)
-        recent_listed_date = today - timedelta(days=settings.recently_listed_days)
 
-        statement = statement.where(
-            (IPO.status == "Ongoing") |
-            (IPO.status == "Upcoming") |
-            ((IPO.status == "Closed") & (func.coalesce(IPO.close_date, IPO.issue_date) >= recent_closed_date)) |
-            ((IPO.status == "Listed") & (func.coalesce(IPO.listing_date, IPO.issue_date) >= recent_listed_date))
+    all_records = db.scalars(statement).unique().all()
+    today = date.today()
+    recent_closed_date = today - timedelta(days=settings.recently_closed_days)
+    recent_listed_date = today - timedelta(days=settings.recently_listed_days)
+
+    filtered_records = []
+    for ipo in all_records:
+        eff_status = compute_lifecycle_status(
+            open_date=ipo.open_date,
+            close_date=ipo.close_date,
+            listing_date=ipo.listing_date,
+            issue_date=ipo.issue_date,
+            static_status=ipo.status,
         )
-        
-    records = db.scalars(statement.offset((max(page, 1)-1)*min(page_size, 50)).limit(min(page_size, 50))).unique().all()
+        setattr(ipo, "_effective_status", eff_status)
+
+        if status_filter:
+            if status_filter.lower() == "all" or eff_status.lower() == status_filter.lower():
+                filtered_records.append(ipo)
+        else:
+            # Default feed: Ongoing, Upcoming, Recent Closed within window, Recent Listed within window
+            ref_close = ipo.close_date or ipo.issue_date
+            ref_listed = ipo.listing_date or ipo.issue_date
+            if eff_status in ("Ongoing", "Upcoming"):
+                filtered_records.append(ipo)
+            elif eff_status == "Closed" and (ref_close is None or ref_close >= recent_closed_date):
+                filtered_records.append(ipo)
+            elif eff_status == "Listed" and (ref_listed is None or ref_listed >= recent_listed_date):
+                filtered_records.append(ipo)
+
+    start = (max(page, 1) - 1) * min(page_size, 50)
+    page_records = filtered_records[start : start + min(page_size, 50)]
     scores = {item.ipo_id: item for item in db.scalars(select(IPOSCore)).all()}
-    return {"items": [ipo_payload(ipo, scores.get(ipo.id)) for ipo in records], "page": page, "page_size": min(page_size, 50)}
+    return {"items": [ipo_payload(ipo, scores.get(ipo.id)) for ipo in page_records], "page": page, "page_size": min(page_size, 50), "total": len(filtered_records)}
 
 @app.get("/api/v1/ipos/summary")
 def ipos_summary(db: Session = Depends(get_db)):
     """Return count of IPOs grouped by lifecycle status."""
-    from sqlalchemy import func
-    rows = db.execute(select(IPO.status, func.count(IPO.id)).group_by(IPO.status)).all()
-    counts = {row[0]: row[1] for row in rows}
+    from app.lifecycle import compute_lifecycle_status
+    ipos = db.scalars(select(IPO)).all()
+    counts = {"Upcoming": 0, "Ongoing": 0, "Closed": 0, "Listed": 0}
+    for ipo in ipos:
+        eff = compute_lifecycle_status(
+            open_date=ipo.open_date,
+            close_date=ipo.close_date,
+            listing_date=ipo.listing_date,
+            issue_date=ipo.issue_date,
+            static_status=ipo.status,
+        )
+        if eff in counts:
+            counts[eff] += 1
     return {
-        "upcoming": counts.get("Upcoming", 0),
-        "ongoing": counts.get("Ongoing", 0),
-        "closed": counts.get("Closed", 0),
-        "listed": counts.get("Listed", 0),
-        "total": sum(counts.values()),
+        "upcoming": counts["Upcoming"],
+        "ongoing": counts["Ongoing"],
+        "closed": counts["Closed"],
+        "listed": counts["Listed"],
+        "total": len(ipos),
     }
 
 
@@ -308,13 +327,20 @@ def search_global(q: str = "", limit: int = 8, db: Session = Depends(get_db)):
     for ipo in records:
         sc = scores.get(ipo.id)
         doc = ipo_docs.get(ipo.id)
+        eff_status = getattr(ipo, "_effective_status", None) or compute_lifecycle_status(
+            open_date=ipo.open_date,
+            close_date=ipo.close_date,
+            listing_date=ipo.listing_date,
+            issue_date=ipo.issue_date,
+            static_status=ipo.status,
+        )
         items.append({
             "id": ipo.id,
             "company_id": ipo.company_id,
             "name": ipo.company.name,
             "slug": ipo.company.slug,
             "sector": ipo.company.sector,
-            "status": ipo.status,
+            "status": eff_status,
             "listing_segment": ipo.listing_segment or ("SME" if "sme" in (ipo.company.exchange or "").lower() else "Mainboard"),
             "exchange": ipo.company.exchange or "NSE/BSE",
             "score": sc.overall_score if sc else None,
@@ -517,10 +543,18 @@ def peers(ipo_id: int, db: Session = Depends(get_db)):
     upper_band = ipo_at_issue.get("upper_band", {})
     current_market = val_data.get("CURRENT_MARKET")
     
+    from app.lifecycle import compute_lifecycle_status
+    eff_status = getattr(ipo, "_effective_status", None) or compute_lifecycle_status(
+        open_date=ipo.open_date,
+        close_date=ipo.close_date,
+        listing_date=ipo.listing_date,
+        issue_date=ipo.issue_date,
+        static_status=ipo.status,
+    )
     target = {
         "name": ipo.company.name,
         "sector": ipo.company.sector,
-        "context": "CURRENT_MARKET" if current_market and ipo.status == "Listed" else "IPO_AT_ISSUE",
+        "context": "CURRENT_MARKET" if current_market and eff_status == "Listed" else "IPO_AT_ISSUE",
         "current_market": current_market,
         "lower_band": lower_band,
         "upper_band": upper_band
@@ -872,13 +906,21 @@ def watchlist(user: User = Depends(get_current_user), db: Session = Depends(get_
         if not ipo:
             continue
         score = scores.get(ipo.id)
+        from app.lifecycle import compute_lifecycle_status
+        eff_status = getattr(ipo, "_effective_status", None) or compute_lifecycle_status(
+            open_date=ipo.open_date,
+            close_date=ipo.close_date,
+            listing_date=ipo.listing_date,
+            issue_date=ipo.issue_date,
+            static_status=ipo.status,
+        )
         items.append({
             "watchlist_id": row.id,
             "ipo_id": row.ipo_id,
             "name": ipo.company.name,
             "slug": ipo.company.slug,
             "sector": ipo.company.sector,
-            "status": ipo.status,
+            "status": eff_status,
             "listing_segment": ipo.listing_segment or ("SME" if "sme" in (ipo.company.exchange or "").lower() else "Mainboard"),
             "exchange": ipo.company.exchange or "NSE/BSE",
             "score": score.overall_score if score else None,

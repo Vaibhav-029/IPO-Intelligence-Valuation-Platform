@@ -251,7 +251,8 @@ export default function IPOPage() {
     valuation?.IPO_AT_ISSUE?.upper_band || 
     (valuation?.market_cap ? valuation : null);
 
-  const upperCap = currentValuation?.market_cap ? n(Math.round(currentValuation.market_cap)) : "—";
+  const mcapValue = currentValuation?.market_cap ?? currentValuation?.implied_market_cap;
+  const upperCap = mcapValue ? n(Math.round(mcapValue)) : "—";
   const ev = currentValuation?.enterprise_value ? n(Math.round(currentValuation.enterprise_value)) : "—";
 
   // Score dimensions matching backend methodology
@@ -855,7 +856,7 @@ export default function IPOPage() {
                   <div className="p-4 bg-[#f8fafc] border border-[#e2e8f0] rounded-[2px]">
                     <div className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider mb-1">Market Cap</div>
                     <div className="text-xl font-bold text-[#001428] font-mono">
-                      {currentValuation.market_cap ? `₹${n(Math.round(currentValuation.market_cap))} Cr` : "—"}
+                      {(currentValuation.market_cap ?? currentValuation.implied_market_cap) ? `₹${n(Math.round(currentValuation.market_cap ?? currentValuation.implied_market_cap))} Cr` : "—"}
                     </div>
                   </div>
                   <div className="p-4 bg-[#f8fafc] border border-[#e2e8f0] rounded-[2px]">

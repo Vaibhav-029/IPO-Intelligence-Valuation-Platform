@@ -64,14 +64,17 @@ def company_snapshot(db: Session, ipo: IPO) -> dict:
 
     financials_series = []
     for period, metric in rows:
+        rev = float(metric.revenue) if metric.revenue is not None else None
+        ebitda = float(metric.ebitda) if metric.ebitda is not None else None
+        pat = float(metric.pat) if metric.pat is not None else None
         financials_series.append({
             "fiscal_year": period.fiscal_year,
             "period_end": str(period.period_end) if period.period_end else None,
-            "revenue_crore": float(metric.revenue),
-            "ebitda_crore": float(metric.ebitda),
-            "pat_crore": float(metric.pat),
-            "ebitda_margin_pct": margin(float(metric.ebitda), float(metric.revenue)),
-            "pat_margin_pct": margin(float(metric.pat), float(metric.revenue)),
+            "revenue_crore": rev,
+            "ebitda_crore": ebitda,
+            "pat_crore": pat,
+            "ebitda_margin_pct": margin(ebitda, rev) if ebitda is not None and rev is not None else None,
+            "pat_margin_pct": margin(pat, rev) if pat is not None and rev is not None else None,
         })
 
     from app.lifecycle import compute_lifecycle_status
@@ -82,29 +85,43 @@ def company_snapshot(db: Session, ipo: IPO) -> dict:
         issue_date=ipo.issue_date,
         static_status=ipo.status,
     )
+
+    rev_cagr = None
+    if len(rows) > 1:
+        first_rev = rows[0][1].revenue
+        last_rev = rows[-1][1].revenue
+        if first_rev is not None and last_rev is not None:
+            rev_cagr = revenue_cagr(float(first_rev), float(last_rev), len(rows) - 1)
+
+    latest_rev = float(latest.revenue) if latest and latest.revenue is not None else None
+    latest_ebitda = float(latest.ebitda) if latest and latest.ebitda is not None else None
+    latest_pat = float(latest.pat) if latest and latest.pat is not None else None
+    ebitda_margin = margin(latest_ebitda, latest_rev) if latest_ebitda is not None and latest_rev is not None else None
+
     return {
         "company": ipo.company.name,
         "sector": ipo.company.sector,
         "description": ipo.company.description,
         "exchange": ipo.company.exchange,
         "ipo_status": eff_status,
-        "issue_size_crore": float(ipo.issue_size),
-        "price_band": [float(ipo.price_low), float(ipo.price_high)],
+        "issue_size_crore": float(ipo.issue_size) if ipo.issue_size is not None else None,
+        "price_band": [
+            float(ipo.price_low) if ipo.price_low is not None else None,
+            float(ipo.price_high) if ipo.price_high is not None else None,
+        ],
         "financials_series": financials_series,
         "latest_financial_period": latest_period.fiscal_year if latest_period else None,
-        "latest_revenue_crore": float(latest.revenue) if latest else None,
-        "latest_ebitda_crore": float(latest.ebitda) if latest else None,
-        "latest_pat_crore": float(latest.pat) if latest else None,
-        "revenue_cagr_2y_pct": revenue_cagr(
-            float(rows[0][1].revenue), float(rows[-1][1].revenue), len(rows) - 1
-        ) if len(rows) > 1 else None,
-        "ebitda_margin_pct": margin(float(latest.ebitda), float(latest.revenue)) if latest else None,
-        "valuation_date": str(valuation.date) if valuation else None,
+        "latest_revenue_crore": latest_rev,
+        "latest_ebitda_crore": latest_ebitda,
+        "latest_pat_crore": latest_pat,
+        "revenue_cagr_2y_pct": rev_cagr,
+        "ebitda_margin_pct": ebitda_margin,
+        "valuation_date": str(valuation.date) if valuation and valuation.date else None,
         "pe": valuation.pe if valuation else None,
         "ps": valuation.ps if valuation else None,
         "ev_ebitda": valuation.ev_ebitda if valuation else None,
-        "market_cap_crore": float(valuation.market_cap) if valuation else None,
-        "enterprise_value_crore": float(valuation.ev) if valuation else None,
+        "market_cap_crore": float(valuation.market_cap) if valuation and valuation.market_cap is not None else None,
+        "enterprise_value_crore": float(valuation.ev) if valuation and valuation.ev is not None else None,
     }
 
 
@@ -122,16 +139,19 @@ def peer_comparison(db: Session, company_id: int) -> dict:
         .where(ValuationMetric.company_id == company_id)
         .order_by(ValuationMetric.date.desc())
     )
-    median_pe = median([v.pe for v in vals if v.pe is not None]) if vals else None
+    valid_pes = [v.pe for v in vals if v.pe is not None]
+    median_pe = median(valid_pes) if valid_pes else None
+
+    company_pe = target.pe if target and target.pe is not None else None
 
     return {
         "peer_count": len(vals),
-        "peer_median_pe": round(median_pe, 2) if median_pe else None,
-        "company_pe": target.pe if target else None,
+        "peer_median_pe": round(median_pe, 2) if median_pe is not None else None,
+        "company_pe": company_pe,
         "pe_premium_discount_pct": premium_discount(
-            target.pe if target else None, median_pe
-        ),
-        "valuation_date": str(target.date) if target else None,
+            company_pe, median_pe
+        ) if company_pe is not None and median_pe is not None else None,
+        "valuation_date": str(target.date) if target and target.date else None,
     }
 
 
@@ -438,27 +458,41 @@ def _deterministic_fallback(context: dict, question: str) -> str:
     )
 
     if any(term in q for term in ("valuation", "premium", "p/e", "peers", "expensive", "cheap")):
+        co_pe = val.get("pe")
+        co_pe_str = f"{co_pe}x" if co_pe is not None else "N/A"
+        peer_pe = peers.get("peer_median_pe")
+        peer_pe_str = f"{peer_pe}x" if peer_pe is not None else "N/A"
+        prem = peers.get("pe_premium_discount_pct")
+        prem_str = f"({prem}% premium/discount)" if prem is not None else ""
         facts.append(
-            f"The P/E is {val.get('pe', 'N/A')}x versus a peer median of "
-            f"{peers.get('peer_median_pe', 'N/A')}x "
-            f"({peers.get('pe_premium_discount_pct', 'N/A')}% premium/discount)."
+            f"The P/E is {co_pe_str} versus a peer median of {peer_pe_str} {prem_str}".strip() + "."
         )
 
     if any(term in q for term in ("growth", "revenue", "financial", "margin", "profit")):
+        cagr = fin.get("revenue_cagr_2y_pct")
+        cagr_str = f"{cagr}%" if cagr is not None else "N/A"
+        margin_val = fin.get("ebitda_margin_pct")
+        margin_str = f"{margin_val}%" if margin_val is not None else "N/A"
         facts.append(
-            f"Revenue CAGR is {fin.get('revenue_cagr_2y_pct', 'N/A')}% "
-            f"and latest EBITDA margin is {fin.get('ebitda_margin_pct', 'N/A')}%."
+            f"Revenue CAGR is {cagr_str} and latest EBITDA margin is {margin_str}."
         )
 
     if any(term in q for term in ("risk", "concern", "worry")):
         if risks:
-            risk_summaries = "; ".join(r["summary"] for r in risks[:3])
-            facts.append(f"Key risks: {risk_summaries}.")
+            risk_summaries = "; ".join(r["summary"] for r in risks[:3] if r.get("summary"))
+            if risk_summaries:
+                facts.append(f"Key risks: {risk_summaries}.")
+            else:
+                facts.append("No specific key risks documented.")
+        else:
+            facts.append("No specific risk factors were identified in available filings.")
 
     if "score" in q and score:
+        score_val = score.get("overall_score") if isinstance(score, dict) else getattr(score, "overall_score", None)
+        score_ver = score.get("methodology_version", "v4.0") if isinstance(score, dict) else getattr(score, "methodology_version", "v4.0")
         facts.append(
-            f"The IPO score is {score['overall_score']}/10 "
-            f"(methodology {score['methodology_version']})."
+            f"The IPO score is {score_val if score_val is not None else 'N/A'}/10 "
+            f"(methodology {score_ver})."
         )
 
     if len(facts) == 1:
@@ -477,30 +511,89 @@ def _deterministic_fallback(context: dict, question: str) -> str:
 
 def _gather_context(db: Session, ipo: IPO, question: str) -> tuple[dict, list[str]]:
     """Legacy gather context to support fallback mode cleanly."""
-    snapshot = company_snapshot(db, ipo)
-    peers = peer_comparison(db, ipo.company_id)
-    risks = get_risks(db, ipo.id)
-    score = get_score(db, ipo.id)
-    evidence = retrieve_evidence(db, ipo.company_id, question)
-    
-    trace = [
-        "get_ipo_profile", "get_financials", "get_valuation", "get_peers", 
-        "get_risks", "search_filing"
-    ]
+    trace = []
+
+    # 1. Company profile & financials snapshot
+    try:
+        snapshot = company_snapshot(db, ipo)
+        trace.extend(["get_ipo_profile", "get_financials", "get_valuation"])
+    except Exception as e:
+        logger.warning(f"_gather_context company_snapshot failed: {e}")
+        snapshot = {
+            "company": ipo.company.name if ipo.company else None,
+            "sector": ipo.company.sector if ipo.company else None,
+            "description": ipo.company.description if ipo.company else None,
+            "exchange": ipo.company.exchange if ipo.company else None,
+            "ipo_status": ipo.status,
+            "issue_size_crore": float(ipo.issue_size) if ipo.issue_size is not None else None,
+            "price_band": [
+                float(ipo.price_low) if ipo.price_low is not None else None,
+                float(ipo.price_high) if ipo.price_high is not None else None,
+            ],
+            "financials_series": [],
+            "latest_financial_period": None,
+            "latest_revenue_crore": None,
+            "latest_ebitda_crore": None,
+            "latest_pat_crore": None,
+            "revenue_cagr_2y_pct": None,
+            "ebitda_margin_pct": None,
+            "pe": None,
+            "ps": None,
+            "ev_ebitda": None,
+            "market_cap_crore": None,
+            "enterprise_value_crore": None,
+        }
+
+    # 2. Peer comparison
+    try:
+        peers = peer_comparison(db, ipo.company_id)
+        trace.append("get_peers")
+    except Exception as e:
+        logger.warning(f"_gather_context peer_comparison failed: {e}")
+        peers = {
+            "peer_count": 0,
+            "peer_median_pe": None,
+            "company_pe": snapshot.get("pe"),
+            "pe_premium_discount_pct": None,
+            "valuation_date": None,
+        }
+
+    # 3. Risk factors
+    try:
+        risks = get_risks(db, ipo.id)
+        trace.append("get_risks")
+    except Exception as e:
+        logger.warning(f"_gather_context get_risks failed: {e}")
+        risks = []
+
+    # 4. IPO score
+    try:
+        score = get_score(db, ipo.id)
+    except Exception as e:
+        logger.warning(f"_gather_context get_score failed: {e}")
+        score = None
+
+    # 5. Filing evidence
+    try:
+        evidence = retrieve_evidence(db, ipo.company_id, question)
+        trace.append("search_filing")
+    except Exception as e:
+        logger.warning(f"_gather_context retrieve_evidence failed: {e}")
+        evidence = []
     
     context = {
         "company_profile": {
-            "name": snapshot["company"],
-            "sector": snapshot["sector"],
-            "issue_size_crore": snapshot["issue_size_crore"],
-            "ipo_status": snapshot["ipo_status"],
+            "name": snapshot.get("company"),
+            "sector": snapshot.get("sector"),
+            "issue_size_crore": snapshot.get("issue_size_crore"),
+            "ipo_status": snapshot.get("ipo_status"),
         },
         "financials": {
-            "revenue_cagr_2y_pct": snapshot["revenue_cagr_2y_pct"],
-            "ebitda_margin_pct": snapshot["ebitda_margin_pct"],
+            "revenue_cagr_2y_pct": snapshot.get("revenue_cagr_2y_pct"),
+            "ebitda_margin_pct": snapshot.get("ebitda_margin_pct"),
         },
         "valuation": {
-            "pe": snapshot["pe"]
+            "pe": snapshot.get("pe")
         },
         "peer_comparison": peers,
         "risk_factors": risks,
@@ -711,7 +804,21 @@ def answer_question(db: Session, ipo: IPO, question: str, chat_history: list[dic
     else:
         mode = "llm"
 
-    snapshot = company_snapshot(db, ipo)
+    try:
+        snapshot = company_snapshot(db, ipo)
+    except Exception as e:
+        logger.warning(f"company_snapshot in answer_question failed: {e}")
+        snapshot = {
+            "company": ipo.company.name if ipo.company else None,
+            "sector": ipo.company.sector if ipo.company else None,
+            "issue_size_crore": float(ipo.issue_size) if ipo.issue_size is not None else None,
+            "latest_revenue_crore": None,
+            "latest_pat_crore": None,
+            "revenue_cagr_2y_pct": None,
+            "ebitda_margin_pct": None,
+            "pe": None,
+            "ps": None,
+        }
     
     return {
         "answer": answer_text,

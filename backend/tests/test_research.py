@@ -314,3 +314,207 @@ def test_research_sessions_crud_and_isolation():
 
     db.close()
 
+
+def test_peer_comparison_all_peers_pe_null():
+    """Regression A: Peer list exists but all peer P/E values are NULL (e.g. Swiggy for Rentomojo).
+    Must not raise StatisticsError, peer median P/E must be None, and context must generate cleanly.
+    """
+    from datetime import date
+    from app.services.research import peer_comparison
+    from app.models import Peer, ValuationMetric
+    db, ipo = _setup()
+
+    # Create target company and peer with NULL P/E
+    target_comp = Company(name="Target Tech Corp", slug="target-tech-corp-test", sector="Tech")
+    peer_comp = Company(name="Loss Making Peer", slug="loss-making-peer-test", sector="Tech")
+    db.add_all([target_comp, peer_comp])
+    db.flush()
+
+    target_ipo = IPO(
+        company_id=target_comp.id,
+        status="Closed",
+        issue_size=500.0,
+        price_low=100.0,
+        price_high=110.0,
+    )
+    db.add(target_ipo)
+    db.flush()
+
+    # Peer valuation exists, but pe is None (loss-making)
+    val_peer = ValuationMetric(company_id=peer_comp.id, date=date(2026, 9, 1), pe=None, ps=5.0)
+    val_target = ValuationMetric(company_id=target_comp.id, date=date(2026, 9, 1), pe=25.0, ps=4.0)
+    peer_link = Peer(company_id=target_comp.id, peer_company_id=peer_comp.id, active=True)
+    db.add_all([val_peer, val_target, peer_link])
+    db.commit()
+
+    # Test peer_comparison directly
+    comp_res = peer_comparison(db, target_comp.id)
+    assert comp_res["peer_count"] == 1
+    assert comp_res["peer_median_pe"] is None
+    assert comp_res["pe_premium_discount_pct"] is None
+    assert comp_res["company_pe"] == 25.0
+
+    # Test _gather_context does not crash and includes peer_comparison
+    context, trace = _gather_context(db, target_ipo, "is the valuation good?")
+    assert "peer_comparison" in context
+    assert context["peer_comparison"]["peer_median_pe"] is None
+    assert "get_peers" in trace
+
+    db.close()
+
+
+def test_company_snapshot_missing_filing_metrics():
+    """Regression B: Financial metric has valid revenue but ebitda=None and pat=None.
+    company_snapshot must succeed without TypeError and preserve None for missing fields.
+    """
+    from datetime import date
+    from app.services.research import company_snapshot
+    from app.models import FinancialPeriod, FinancialMetric
+    db, _ = _setup()
+
+    comp = Company(name="Sparse Metrics Corp", slug="sparse-metrics-corp-test", sector="Industrial")
+    db.add(comp)
+    db.flush()
+
+    ipo = IPO(
+        company_id=comp.id,
+        status="Ongoing",
+        issue_size=300.0,
+        price_low=50.0,
+        price_high=55.0,
+    )
+    db.add(ipo)
+    db.flush()
+
+    period = FinancialPeriod(company_id=comp.id, fiscal_year="FY2025", period_end=date(2025, 3, 31))
+    db.add(period)
+    db.flush()
+
+    metric = FinancialMetric(period_id=period.id, revenue=1200.0, ebitda=None, pat=None)
+    db.add(metric)
+    db.commit()
+
+    snapshot = company_snapshot(db, ipo)
+    assert snapshot["latest_revenue_crore"] == 1200.0
+    assert snapshot["latest_ebitda_crore"] is None
+    assert snapshot["latest_pat_crore"] is None
+    assert snapshot["ebitda_margin_pct"] is None
+
+    # Series also preserves None cleanly
+    assert len(snapshot["financials_series"]) == 1
+    assert snapshot["financials_series"][0]["revenue_crore"] == 1200.0
+    assert snapshot["financials_series"][0]["ebitda_crore"] is None
+    assert snapshot["financials_series"][0]["pat_crore"] is None
+    assert snapshot["financials_series"][0]["ebitda_margin_pct"] is None
+
+    db.close()
+
+
+def test_research_question_rentomojo_endpoint():
+    """Regression C: Research message for Rentomojo ('is the valuation good?') returns HTTP 201/200,
+    never fails with 500 / 'Failed to fetch', and generates answer with tool trace.
+    """
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app.core.security import create_token, hash_password
+    from app.models import User, Peer, ValuationMetric
+    from datetime import timedelta, date
+    db, _ = _setup()
+
+    user = User(email="rentomojo_analyst@example.com", password_hash=hash_password("Pass123!"))
+    db.add(user)
+    
+    # Check if Rentomojo / Swiggy exist or create them
+    rento_comp = db.scalar(select(Company).where(Company.slug == "rentomojo"))
+    if not rento_comp:
+        rento_comp = Company(name="Rentomojo", slug="rentomojo-test", sector="Consumer Technology")
+        db.add(rento_comp)
+        db.flush()
+
+    swiggy_comp = db.scalar(select(Company).where(Company.slug == "swiggy"))
+    if not swiggy_comp:
+        swiggy_comp = Company(name="Swiggy", slug="swiggy-test", sector="Consumer Technology")
+        db.add(swiggy_comp)
+        db.flush()
+
+    rento_ipo = db.scalar(select(IPO).where(IPO.company_id == rento_comp.id))
+    if not rento_ipo:
+        rento_ipo = IPO(company_id=rento_comp.id, status="Closed", issue_size=1255.6, price_low=100.0, price_high=110.0)
+        db.add(rento_ipo)
+        db.flush()
+
+    db.add_all([
+        ValuationMetric(company_id=rento_comp.id, date=date(2026, 9, 1), pe=None, ps=3.5),
+        ValuationMetric(company_id=swiggy_comp.id, date=date(2026, 9, 1), pe=None, ps=4.0),
+        Peer(company_id=rento_comp.id, peer_company_id=swiggy_comp.id, active=True),
+    ])
+    db.commit()
+
+    token = create_token(user, "access", timedelta(hours=1))
+    headers = {"Authorization": f"Bearer {token}"}
+    client = TestClient(app)
+
+    # 1. Create session
+    res_sess = client.post("/api/v1/research/sessions", json={"ipo_id": rento_ipo.id, "title": "is the valuation good?"}, headers=headers)
+    assert res_sess.status_code == 201
+    sess_id = res_sess.json()["id"]
+
+    # 2. Send message
+    res_msg = client.post(f"/api/v1/research/sessions/{sess_id}/messages", json={"content": "is the valuation good?"}, headers=headers)
+    assert res_msg.status_code in (200, 201), f"Endpoint returned {res_msg.status_code}: {res_msg.text}"
+    body = res_msg.json()
+    assert "answer" in body and len(body["answer"]) > 0
+    assert "tool_trace" in body
+    assert isinstance(body["tool_trace"], list)
+
+    db.close()
+
+
+def test_research_question_karamtara_missing_metrics():
+    """Regression D: Research question for an IPO with missing EBITDA/PAT (Karamtara scenario)
+    succeeds without TypeError or 500 error.
+    """
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app.core.security import create_token, hash_password
+    from app.models import User, FinancialPeriod, FinancialMetric
+    from datetime import timedelta, date
+    db, _ = _setup()
+
+    user = User(email="karamtara_analyst@example.com", password_hash=hash_password("Pass123!"))
+    db.add(user)
+
+    karam_comp = Company(name="Karamtara Engineering", slug="karamtara-engineering-test", sector="Engineering")
+    db.add(karam_comp)
+    db.flush()
+
+    karam_ipo = IPO(company_id=karam_comp.id, status="Closed", issue_size=750.0, price_low=80.0, price_high=85.0)
+    db.add(karam_ipo)
+    db.flush()
+
+    # Add periods with missing ebitda and pat
+    p1 = FinancialPeriod(company_id=karam_comp.id, fiscal_year="FY2025", period_end=date(2025, 3, 31))
+    db.add(p1)
+    db.flush()
+    db.add(FinancialMetric(period_id=p1.id, revenue=3158.0, ebitda=None, pat=139.0))
+    db.commit()
+
+    token = create_token(user, "access", timedelta(hours=1))
+    headers = {"Authorization": f"Bearer {token}"}
+    client = TestClient(app)
+
+    # 1. Create session
+    res_sess = client.post("/api/v1/research/sessions", json={"ipo_id": karam_ipo.id, "title": "Summarize the financial risks."}, headers=headers)
+    assert res_sess.status_code == 201
+    sess_id = res_sess.json()["id"]
+
+    # 2. Send message
+    res_msg = client.post(f"/api/v1/research/sessions/{sess_id}/messages", json={"content": "Summarize the financial risks."}, headers=headers)
+    assert res_msg.status_code in (200, 201), f"Endpoint returned {res_msg.status_code}: {res_msg.text}"
+    body = res_msg.json()
+    assert "answer" in body and len(body["answer"]) > 0
+    assert "key_metrics" in body
+
+    db.close()
+
+

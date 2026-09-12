@@ -116,6 +116,8 @@ class GroqProvider:
                     try:
                         import time
                         sleep_time = float(retry_after)
+                        if sleep_time > 5.0:
+                            raise RateLimitError(f"Rate limit retry delay too long: {sleep_time}s")
                         logger.info(f"Sleeping for {sleep_time}s as per Retry-After header")
                         time.sleep(sleep_time)
                     except ValueError:
